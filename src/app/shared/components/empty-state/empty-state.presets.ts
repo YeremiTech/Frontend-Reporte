@@ -2,7 +2,6 @@ import type { EmptyStateIconType } from './empty-state.component';
 
 export interface EmptyStatePreset {
   iconType?: EmptyStateIconType;
-  icon?: string;
   title: string;
   description: string;
   buttonLabel?: string;

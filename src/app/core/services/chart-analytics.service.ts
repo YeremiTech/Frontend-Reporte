@@ -1,12 +1,16 @@
 import { Injectable } from '@angular/core';
-import type { ApexChart } from 'ng-apexcharts';
+import type { ApexOptions } from 'apexcharts';
 import type {
-  AggregatedPoint,
   ChartBuildConfig,
   ChartOptions,
   ColumnMeta,
 } from '../models/chart.model';
 import { parseNumericCell } from '../utils/parse-numeric-cell';
+
+interface AggregatedPoint {
+  label: string;
+  value: number;
+}
 
 const CHART_PALETTE = [
   '#008FFB',
@@ -23,6 +27,22 @@ const CHART_PALETTE = [
 
 const SAMPLE_LIMIT = 500;
 
+/** Columnas de dimensión RGFM: deben poder usarse como categoría aunque parezcan numéricas (p. ej. MES=202401). */
+const DIMENSION_HEADERS = [
+  'mes',
+  'd_emi_doc',
+  'c_vendedor',
+  'vendedor',
+  'segmento',
+  'producto agrupado',
+  'producto desagregado',
+  'clasificación',
+  'mercado local',
+  'sub mercado',
+  'c_nom_cli',
+  'c_ruc',
+];
+
 @Injectable({ providedIn: 'root' })
 export class ChartAnalyticsService {
   analyzeColumns(rows: Record<string, string>[], columns: string[]): ColumnMeta[] {
@@ -31,19 +51,47 @@ export class ChartAnalyticsService {
   }
 
   suggestConfig(meta: ColumnMeta[]): Partial<ChartBuildConfig> {
-    const categories = meta.filter((m) => m.role === 'category' || m.role === 'mixed');
-    const numerics = meta.filter((m) => m.role === 'numeric');
+    const categories = meta.filter((m) => this.isChartCategoryColumn(m));
+    const numerics = meta.filter((m) => m.role === 'numeric' && !this.isDimensionHeader(m.name));
+
+    const preferredCategories = ['MES', 'd_emi_doc', 'Segmento', 'c_vendedor', 'Producto Agrupado'];
+    const preferredValues = ['REVENUE', 'n_netosoles', 'n_neto', 'VENTA NUEVA RECURRENTE'];
+
     const categoryColumn =
+      this.pickColumnByHints(meta, preferredCategories) ??
       categories.sort((a, b) => a.distinctCount - b.distinctCount)[0]?.name ??
       meta[0]?.name;
-    const valueColumn = numerics[0]?.name;
+
+    const valueColumn =
+      this.pickColumnByHints(meta, preferredValues) ??
+      numerics[0]?.name ??
+      meta.find((m) => m.role === 'numeric')?.name;
+
     return {
-      kind: 'bar',
       categoryColumn,
       valueColumn,
       aggregation: valueColumn ? 'sum' : 'count',
       topN: 12,
     };
+  }
+
+  private pickColumnByHints(meta: ColumnMeta[], hints: string[]): string | undefined {
+    for (const hint of hints) {
+      const match = meta.find((column) => column.name.trim().toLowerCase() === hint.toLowerCase());
+      if (match) {
+        return match.name;
+      }
+    }
+    return undefined;
+  }
+
+  isChartCategoryColumn(meta: ColumnMeta): boolean {
+    return meta.role !== 'numeric' || this.isDimensionHeader(meta.name);
+  }
+
+  isDimensionHeader(name: string): boolean {
+    const normalized = name.trim().toLowerCase();
+    return DIMENSION_HEADERS.some((hint) => normalized === hint);
   }
 
   aggregate(
@@ -141,7 +189,9 @@ export class ChartAnalyticsService {
 
     const numericRatio = nonEmpty > 0 ? numeric / nonEmpty : 0;
     let role: ColumnMeta['role'] = 'mixed';
-    if (numericRatio >= 0.85) {
+    if (this.isDimensionHeader(name)) {
+      role = 'category';
+    } else if (numericRatio >= 0.85) {
       role = 'numeric';
     } else if (numericRatio <= 0.15) {
       role = 'category';
@@ -166,7 +216,7 @@ export class ChartAnalyticsService {
     }
   }
 
-  private buildToolbar(title: string): NonNullable<ApexChart['toolbar']> {
+  private buildToolbar(title: string): NonNullable<NonNullable<ApexOptions['chart']>['toolbar']> {
     const filename = this.exportFileName(title);
     return {
       show: true,

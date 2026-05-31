@@ -88,13 +88,6 @@ export interface SaveImportResult {
 
 export type RgfmTableRow = RgfmRecord | Record<string, string>;
 
-export interface ApiError {
-  code?: string;
-  message?: string;
-  error: string;
-  timestamp?: string;
-}
-
 export const HEADER_FIELD_MAP: Record<string, keyof RgfmRecord> = {
   MES: 'mes',
   'Producto Agrupado': 'productoAgrupado',

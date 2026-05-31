@@ -18,7 +18,7 @@ export const ApiErrorCode = {
 
 export type ApiErrorCodeType = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
 
-export const API_ERROR_CODES: readonly ApiErrorCodeType[] = Object.values(ApiErrorCode);
+const API_ERROR_CODES: readonly ApiErrorCodeType[] = Object.values(ApiErrorCode);
 
 export function isApiErrorCode(value: string): value is ApiErrorCodeType {
   return (API_ERROR_CODES as readonly string[]).includes(value);

@@ -29,7 +29,7 @@ export interface SharedChartConfig {
   topN: number;
 }
 
-export interface ChartPanelView {
+interface ChartPanelView {
   kind: ChartKind;
   label: string;
   icon: string;
@@ -52,9 +52,6 @@ export class ChartsDashboardComponent {
   readonly loading = this.dataStore.loading;
   readonly hasData = this.dataStore.hasData;
   readonly topNDraft = signal(12);
-
-  private optionsCacheKey = '';
-  private readonly optionsCache = new Map<ChartKind, ChartOptions | null>();
   private topNDebounceId: ReturnType<typeof setTimeout> | null = null;
 
   readonly columnMeta = computed(() => {
@@ -66,7 +63,7 @@ export class ChartsDashboardComponent {
   });
 
   readonly categoryColumns = computed(() =>
-    this.columnMeta().filter((m) => m.role !== 'numeric')
+    this.columnMeta().filter((m) => this.analytics.isChartCategoryColumn(m))
   );
 
   readonly valueColumns = computed(() =>
@@ -83,44 +80,60 @@ export class ChartsDashboardComponent {
 
   readonly chartPanels = CHART_PANELS;
 
+  /** Solo monta ApexCharts en paneles expandidos (mejor tiempo de carga inicial). */
+  private readonly expandedPanels = signal<ReadonlySet<ChartKind>>(new Set<ChartKind>(['bar']));
+
+  readonly fullscreenPanel = signal<ChartKind | null>(null);
+
   readonly hasAnyChart = computed(() => {
     const snap = this.dataStore.snapshot();
     const cfg = this.config();
     return !!snap && !!cfg.categoryColumn;
   });
 
-  buildPanelOptions(kind: ChartKind): ChartOptions | null {
+  readonly chartOptionsByKind = computed(() => {
     const snap = this.dataStore.snapshot();
     const cfg = this.config();
+    const map = new Map<ChartKind, ChartOptions | null>();
+
     if (!snap || !cfg.categoryColumn) {
-      return null;
+      return map;
     }
 
-    const cacheKey = this.buildOptionsCacheKey(cfg, snap.rows.length);
-    if (this.optionsCacheKey !== cacheKey) {
-      this.optionsCacheKey = cacheKey;
-      this.optionsCache.clear();
+    for (const panel of CHART_PANELS) {
+      map.set(
+        panel.kind,
+        this.analytics.buildChartOptions(
+          snap.rows,
+          {
+            kind: panel.kind,
+            categoryColumn: cfg.categoryColumn,
+            valueColumn: cfg.valueColumn,
+            aggregation: cfg.aggregation,
+            title: cfg.title,
+            topN: cfg.topN,
+          },
+          { compact: false }
+        )
+      );
     }
 
-    const cached = this.optionsCache.get(kind);
-    if (cached !== undefined) {
-      return cached;
+    return map;
+  });
+
+  panelOptions(kind: ChartKind, view: 'panel' | 'fullscreen' = 'panel'): ChartOptions | null {
+    const options = this.chartOptionsByKind().get(kind) ?? null;
+    if (!options?.chart || view !== 'fullscreen') {
+      return options;
     }
 
-    const options = this.analytics.buildChartOptions(
-      snap.rows,
-      {
-        kind,
-        categoryColumn: cfg.categoryColumn,
-        valueColumn: cfg.valueColumn,
-        aggregation: cfg.aggregation,
-        title: cfg.title,
-        topN: cfg.topN,
+    return {
+      ...options,
+      chart: {
+        ...options.chart,
+        height: this.fullscreenChartHeight(),
       },
-      { compact: true }
-    );
-    this.optionsCache.set(kind, options);
-    return options;
+    };
   }
 
   constructor() {
@@ -130,8 +143,6 @@ export class ChartsDashboardComponent {
 
     effect(() => {
       this.topNDraft.set(this.config().topN);
-      this.optionsCache.clear();
-      this.optionsCacheKey = '';
     });
 
     effect(() => {
@@ -188,14 +199,50 @@ export class ChartsDashboardComponent {
     }, 250);
   }
 
-  private buildOptionsCacheKey(cfg: SharedChartConfig, rowCount: number): string {
-    return [
-      cfg.categoryColumn,
-      cfg.valueColumn ?? '',
-      cfg.aggregation,
-      cfg.title,
-      cfg.topN,
-      rowCount,
-    ].join('|');
+  isPanelExpanded(kind: ChartKind): boolean {
+    return this.expandedPanels().has(kind);
+  }
+
+  togglePanel(kind: ChartKind): void {
+    this.expandedPanels.update((current) => {
+      const next = new Set(current);
+      if (next.has(kind)) {
+        next.delete(kind);
+      } else {
+        next.add(kind);
+      }
+      return next;
+    });
+  }
+
+  panelToggleLabel(kind: ChartKind, label: string): string {
+    return this.isPanelExpanded(kind) ? `Ocultar gráfico ${label}` : `Mostrar gráfico ${label}`;
+  }
+
+  panelFullscreenLabel(label: string): string {
+    return `Ver gráfico ${label} en pantalla completa`;
+  }
+
+  fullscreenPanelMeta(): ChartPanelView | null {
+    const kind = this.fullscreenPanel();
+    if (!kind) {
+      return null;
+    }
+    return this.chartPanels.find((panel) => panel.kind === kind) ?? null;
+  }
+
+  openFullscreen(kind: ChartKind): void {
+    this.fullscreenPanel.set(kind);
+  }
+
+  closeFullscreen(): void {
+    this.fullscreenPanel.set(null);
+  }
+
+  private fullscreenChartHeight(): number {
+    if (typeof window === 'undefined') {
+      return 520;
+    }
+    return Math.max(Math.floor(window.innerHeight * 0.72), 420);
   }
 }

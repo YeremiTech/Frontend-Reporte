@@ -95,22 +95,80 @@
           <p class="charts-no-chart">Seleccione una columna de categoría válida.</p>
         } @else {
           @for (panel of chartPanels; track panel.kind) {
-            <article class="chart-panel">
+            <article
+              class="chart-panel"
+              [class.chart-panel--collapsed]="!isPanelExpanded(panel.kind)"
+            >
               <header class="chart-panel__header">
-                <i class="bi {{ panel.icon }}" aria-hidden="true"></i>
-                <h3>{{ panel.label }}</h3>
+                <div class="chart-panel__title">
+                  <i class="bi {{ panel.icon }}" aria-hidden="true"></i>
+                  <h3>{{ panel.label }}</h3>
+                </div>
+                <div class="chart-panel__actions">
+                  <button
+                    type="button"
+                    class="chart-panel__action-btn"
+                    [attr.aria-expanded]="isPanelExpanded(panel.kind)"
+                    [attr.aria-label]="panelToggleLabel(panel.kind, panel.label)"
+                    (click)="togglePanel(panel.kind)"
+                  >
+                    <i
+                      class="bi"
+                      [class.bi-chevron-up]="isPanelExpanded(panel.kind)"
+                      [class.bi-chevron-down]="!isPanelExpanded(panel.kind)"
+                      aria-hidden="true"
+                    ></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="chart-panel__action-btn"
+                    [attr.aria-label]="panelFullscreenLabel(panel.label)"
+                    (click)="openFullscreen(panel.kind)"
+                  >
+                    <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i>
+                  </button>
+                </div>
               </header>
-              <div class="chart-panel__body">
-                @defer (on viewport) {
-                  <app-apex-chart [options]="buildPanelOptions(panel.kind)" />
-                } @placeholder {
-                  <p class="chart-panel__empty">Cargando gráfico…</p>
-                }
-              </div>
+              @if (isPanelExpanded(panel.kind)) {
+                <div class="chart-panel__body">
+                  @if (panelOptions(panel.kind); as chartOptions) {
+                    <app-apex-chart [options]="chartOptions" />
+                  } @else {
+                    <p class="chart-panel__empty">No hay datos suficientes para este gráfico.</p>
+                  }
+                </div>
+              }
             </article>
           }
         }
       </section>
     </div>
+
+    @if (fullscreenPanelMeta(); as fsPanel) {
+      <div
+        class="chart-fullscreen"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="'Gráfico ' + fsPanel.label + ' en pantalla completa'"
+      >
+        <header class="chart-fullscreen__header">
+          <div class="chart-fullscreen__title">
+            <i class="bi {{ fsPanel.icon }}" aria-hidden="true"></i>
+            <h2>{{ fsPanel.label }}</h2>
+          </div>
+          <button
+            type="button"
+            class="chart-panel__action-btn"
+            aria-label="Salir de pantalla completa"
+            (click)="closeFullscreen()"
+          >
+            <i class="bi bi-fullscreen-exit" aria-hidden="true"></i>
+          </button>
+        </header>
+        <div class="chart-fullscreen__body">
+          <app-apex-chart [options]="panelOptions(fsPanel.kind, 'fullscreen')" />
+        </div>
+      </div>
+    }
   }
 </app-page-shell>

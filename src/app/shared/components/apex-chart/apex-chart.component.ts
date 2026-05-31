@@ -1,54 +1,105 @@
-import { NgComponentOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
+  ElementRef,
+  OnDestroy,
+  effect,
   input,
-  signal,
-  Type,
+  viewChild,
 } from '@angular/core';
+import type { ApexOptions } from 'apexcharts';
+import type ApexCharts from 'apexcharts';
 import type { ChartOptions } from '../../../core/models/chart.model';
-import type { ApexChartInnerComponent } from './apex-chart-inner.component';
+
+const APEX_OPTION_KEYS: (keyof ChartOptions)[] = [
+  'series',
+  'chart',
+  'xaxis',
+  'yaxis',
+  'title',
+  'dataLabels',
+  'stroke',
+  'fill',
+  'legend',
+  'tooltip',
+  'plotOptions',
+  'responsive',
+  'colors',
+  'labels',
+  'markers',
+];
 
 @Component({
   selector: 'app-apex-chart',
   standalone: true,
-  imports: [NgComponentOutlet],
-  template: `
-    @if (innerComponent(); as component) {
-      <ng-container *ngComponentOutlet="component; inputs: innerInputs()" />
-    } @else {
-      <p class="apex-chart-loading" aria-hidden="true">Cargando gráfico…</p>
-    }
-  `,
-  styles: [
-    `
-      :host {
-        display: block;
-        width: 100%;
-      }
-
-      .apex-chart-loading {
-        margin: 0;
-        padding: 2rem 1rem;
-        text-align: center;
-        color: #5f6b7a;
-        font-size: 0.875rem;
-      }
-    `,
-  ],
+  template: `<div #chartHost class="apex-chart-host"></div>`,
+  styleUrl: './apex-chart.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ApexChartComponent {
+export class ApexChartComponent implements OnDestroy {
   readonly options = input<ChartOptions | null>(null);
 
-  readonly innerComponent = signal<Type<ApexChartInnerComponent> | null>(null);
-
-  readonly innerInputs = computed(() => ({ options: this.options() }));
+  private readonly host = viewChild.required<ElementRef<HTMLElement>>('chartHost');
+  private chart: ApexCharts | null = null;
+  private renderGeneration = 0;
 
   constructor() {
-    void import('./apex-chart-inner.component').then((module) => {
-      this.innerComponent.set(module.ApexChartInnerComponent);
+    effect(() => {
+      const opts = this.options();
+      const host = this.host();
+      if (!host || !opts?.series || !opts.chart) {
+        return;
+      }
+      void this.render(opts);
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroyChart();
+  }
+
+  private async render(opts: ChartOptions): Promise<void> {
+    const generation = ++this.renderGeneration;
+    const { default: ApexCharts } = await import('apexcharts');
+    if (generation !== this.renderGeneration) {
+      return;
+    }
+
+    const element = this.host()?.nativeElement;
+    if (!element) {
+      return;
+    }
+
+    this.destroyChart();
+    this.chart = new ApexCharts(element, this.toApexOptions(opts));
+    await this.chart.render();
+  }
+
+  private toApexOptions(opts: ChartOptions): ApexOptions {
+    const apex: Record<string, unknown> = {};
+
+    for (const key of APEX_OPTION_KEYS) {
+      const value = opts[key];
+      if (value === undefined || value === null) {
+        continue;
+      }
+      if (Array.isArray(value) && value.length === 0) {
+        continue;
+      }
+      apex[key] = value;
+    }
+
+    const chart = { ...(apex['chart'] as Record<string, unknown> | undefined) };
+    if (!chart['width']) {
+      chart['width'] = '100%';
+    }
+    apex['chart'] = chart;
+
+    return apex as ApexOptions;
+  }
+
+  private destroyChart(): void {
+    this.chart?.destroy();
+    this.chart = null;
   }
 }

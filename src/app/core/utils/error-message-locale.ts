@@ -6,7 +6,7 @@ function messageForCode(code: ApiErrorCodeType): string {
 }
 
 /** Indicios de texto pensado para el usuario en español. */
-export function isLikelySpanish(text: string): boolean {
+function isLikelySpanish(text: string): boolean {
   const t = text.trim();
   if (!t) {
     return false;
@@ -20,7 +20,7 @@ export function isLikelySpanish(text: string): boolean {
 }
 
 /** Mensajes técnicos en inglés (Spring, Angular, HTTP, JDBC). */
-export function isLikelyEnglish(text: string): boolean {
+function isLikelyEnglish(text: string): boolean {
   const t = text.trim();
   if (!t) {
     return false;

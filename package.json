@@ -22,7 +22,6 @@
     "apexcharts": "^3.54.1",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
-    "ng-apexcharts": "^1.15.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "xlsx": "^0.18.5",
@@ -34,7 +33,6 @@
     "@angular/compiler-cli": "^19.2.0",
     "autoprefixer": "^10.5.0",
     "postcss": "^8.5.15",
-    "tailwindcss": "^3.4.19",
     "typescript": "~5.7.2"
   }
 }
