@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, afterNextRender, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type {
   ChartAggregation,
@@ -11,6 +11,7 @@ import { ReportDataStoreService } from '../../../../core/services/report-data-st
 import { ApexChartComponent } from '../../../../shared/components/apex-chart/apex-chart.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { EMPTY_STATE_PRESETS } from '../../../../shared/components/empty-state/empty-state.presets';
+import { LoaderComponent } from '../../../../shared/components/loader/loader.component';
 import { PageShellComponent } from '../../../../shared/components/page-shell/page-shell.component';
 
 const CHART_PANELS: { kind: ChartKind; label: string; icon: string }[] = [
@@ -28,17 +29,16 @@ export interface SharedChartConfig {
   topN: number;
 }
 
-export interface ChartPanelView {
+interface ChartPanelView {
   kind: ChartKind;
   label: string;
   icon: string;
-  options: ChartOptions | null;
 }
 
 @Component({
   selector: 'app-charts-dashboard',
   standalone: true,
-  imports: [FormsModule, ApexChartComponent, PageShellComponent, EmptyStateComponent],
+  imports: [FormsModule, ApexChartComponent, PageShellComponent, EmptyStateComponent, LoaderComponent],
   templateUrl: './charts-dashboard.component.html',
   styleUrl: './charts-dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,7 +49,10 @@ export class ChartsDashboardComponent {
   private readonly dataStore = inject(ReportDataStoreService);
   private readonly analytics = inject(ChartAnalyticsService);
 
+  readonly loading = this.dataStore.loading;
   readonly hasData = this.dataStore.hasData;
+  readonly topNDraft = signal(12);
+  private topNDebounceId: ReturnType<typeof setTimeout> | null = null;
 
   readonly columnMeta = computed(() => {
     const snap = this.dataStore.snapshot();
@@ -60,7 +63,7 @@ export class ChartsDashboardComponent {
   });
 
   readonly categoryColumns = computed(() =>
-    this.columnMeta().filter((m) => m.role !== 'numeric')
+    this.columnMeta().filter((m) => this.analytics.isChartCategoryColumn(m))
   );
 
   readonly valueColumns = computed(() =>
@@ -75,33 +78,73 @@ export class ChartsDashboardComponent {
     topN: 12,
   });
 
-  readonly chartPanels = computed((): ChartPanelView[] => {
+  readonly chartPanels = CHART_PANELS;
+
+  /** Solo monta ApexCharts en paneles expandidos (mejor tiempo de carga inicial). */
+  private readonly expandedPanels = signal<ReadonlySet<ChartKind>>(new Set<ChartKind>(['bar']));
+
+  readonly fullscreenPanel = signal<ChartKind | null>(null);
+
+  readonly hasAnyChart = computed(() => {
     const snap = this.dataStore.snapshot();
     const cfg = this.config();
-    if (!snap || !cfg.categoryColumn) {
-      return CHART_PANELS.map((p) => ({ ...p, options: null }));
-    }
-
-    return CHART_PANELS.map((panel) => ({
-      ...panel,
-      options: this.analytics.buildChartOptions(
-        snap.rows,
-        {
-          kind: panel.kind,
-          categoryColumn: cfg.categoryColumn,
-          valueColumn: cfg.valueColumn,
-          aggregation: cfg.aggregation,
-          title: cfg.title,
-          topN: cfg.topN,
-        },
-        { compact: true }
-      ),
-    }));
+    return !!snap && !!cfg.categoryColumn;
   });
 
-  readonly hasAnyChart = computed(() => this.chartPanels().some((p) => p.options !== null));
+  readonly chartOptionsByKind = computed(() => {
+    const snap = this.dataStore.snapshot();
+    const cfg = this.config();
+    const map = new Map<ChartKind, ChartOptions | null>();
+
+    if (!snap || !cfg.categoryColumn) {
+      return map;
+    }
+
+    for (const panel of CHART_PANELS) {
+      map.set(
+        panel.kind,
+        this.analytics.buildChartOptions(
+          snap.rows,
+          {
+            kind: panel.kind,
+            categoryColumn: cfg.categoryColumn,
+            valueColumn: cfg.valueColumn,
+            aggregation: cfg.aggregation,
+            title: cfg.title,
+            topN: cfg.topN,
+          },
+          { compact: false }
+        )
+      );
+    }
+
+    return map;
+  });
+
+  panelOptions(kind: ChartKind, view: 'panel' | 'fullscreen' = 'panel'): ChartOptions | null {
+    const options = this.chartOptionsByKind().get(kind) ?? null;
+    if (!options?.chart || view !== 'fullscreen') {
+      return options;
+    }
+
+    return {
+      ...options,
+      chart: {
+        ...options.chart,
+        height: this.fullscreenChartHeight(),
+      },
+    };
+  }
 
   constructor() {
+    afterNextRender(() => {
+      void this.dataStore.refreshFromDatabase();
+    });
+
+    effect(() => {
+      this.topNDraft.set(this.config().topN);
+    });
+
     effect(() => {
       const meta = this.columnMeta();
       if (!meta.length) {
@@ -143,6 +186,63 @@ export class ChartsDashboardComponent {
   }
 
   onTopNChange(topN: number): void {
-    this.config.update((c) => ({ ...c, topN: Math.max(3, Math.min(30, topN)) }));
+    const clamped = Math.max(3, Math.min(30, topN));
+    this.topNDraft.set(clamped);
+
+    if (this.topNDebounceId !== null) {
+      clearTimeout(this.topNDebounceId);
+    }
+
+    this.topNDebounceId = setTimeout(() => {
+      this.config.update((c) => ({ ...c, topN: clamped }));
+      this.topNDebounceId = null;
+    }, 250);
+  }
+
+  isPanelExpanded(kind: ChartKind): boolean {
+    return this.expandedPanels().has(kind);
+  }
+
+  togglePanel(kind: ChartKind): void {
+    this.expandedPanels.update((current) => {
+      const next = new Set(current);
+      if (next.has(kind)) {
+        next.delete(kind);
+      } else {
+        next.add(kind);
+      }
+      return next;
+    });
+  }
+
+  panelToggleLabel(kind: ChartKind, label: string): string {
+    return this.isPanelExpanded(kind) ? `Ocultar gráfico ${label}` : `Mostrar gráfico ${label}`;
+  }
+
+  panelFullscreenLabel(label: string): string {
+    return `Ver gráfico ${label} en pantalla completa`;
+  }
+
+  fullscreenPanelMeta(): ChartPanelView | null {
+    const kind = this.fullscreenPanel();
+    if (!kind) {
+      return null;
+    }
+    return this.chartPanels.find((panel) => panel.kind === kind) ?? null;
+  }
+
+  openFullscreen(kind: ChartKind): void {
+    this.fullscreenPanel.set(kind);
+  }
+
+  closeFullscreen(): void {
+    this.fullscreenPanel.set(null);
+  }
+
+  private fullscreenChartHeight(): number {
+    if (typeof window === 'undefined') {
+      return 520;
+    }
+    return Math.max(Math.floor(window.innerHeight * 0.72), 420);
   }
 }

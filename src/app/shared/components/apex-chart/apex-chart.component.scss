@@ -1,4 +1,18 @@
+.apex-chart-host {
+  width: 100%;
+  min-height: 280px;
+}
+
 :host {
   display: block;
   width: 100%;
+  overflow: visible;
+
+  :deep(.apexcharts-toolbar) {
+    z-index: 5;
+  }
+
+  :deep(.apexcharts-menu) {
+    z-index: 10;
+  }
 }

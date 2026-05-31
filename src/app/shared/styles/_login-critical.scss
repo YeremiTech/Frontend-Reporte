@@ -1,0 +1,93 @@
+/* Estilos críticos del login: evitan FOUC antes de bootstrap.css diferido. */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #102a43 0%, #1a3a5a 45%, #2a5080 100%);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  background: #fff;
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 0 28px 70px rgb(0 0 0 / 28%);
+}
+
+.login-page .rgfm-field__label {
+  display: inline-block;
+  margin-bottom: 0;
+}
+
+.login-page .rgfm-field .input-group {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  align-items: stretch;
+}
+
+.login-page .rgfm-field .input-group-text {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #1a3a5a;
+  text-align: center;
+  white-space: nowrap;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px 0 0 8px;
+  transition: border-color 0.15s ease;
+}
+
+.login-page .rgfm-field .form-control {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #202124;
+  background-color: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0 8px 8px 0;
+  appearance: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.login-page .rgfm-field .input-group:focus-within {
+  border-radius: 8px;
+  box-shadow: 0 0 0 3px rgb(26 58 90 / 12%);
+}
+
+.login-page .rgfm-field .input-group:focus-within .form-control,
+.login-page .rgfm-field .input-group:focus-within .input-group-text {
+  border-color: #1a3a5a;
+  outline: none;
+}
+
+.login-page .rgfm-field .input-group:focus-within .form-control:focus {
+  box-shadow: none;
+}
+
+.login-page .mb-3 {
+  margin-bottom: 1rem;
+}
+
+.login-page .mb-4 {
+  margin-bottom: 1.5rem;
+}
+
+.login-page .login-icon {
+  display: inline-flex;
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+}

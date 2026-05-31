@@ -1,6 +1,7 @@
 @use './app/shared/styles/page-shell';
 @use './app/shared/styles/data-table';
 @use './app/shared/styles/rgfm-buttons';
+@use './app/shared/styles/form-fields';
 
 :root {
   --app-bg: #eef2f7;
@@ -9,6 +10,8 @@
   --primary-light: #2a5080;
   --accent: #6eb5ff;
   --card-shadow: 0 8px 24px rgba(16, 42, 67, 0.08);
+  --field-focus-border: #1a3a5a;
+  --field-focus-ring: rgb(26 58 90 / 12%);
 }
 
 *,
@@ -28,19 +31,16 @@
 }
 
 .form-control:focus,
-.form-select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 0.2rem rgba(110, 181, 255, 0.25);
+.form-control:focus-visible,
+.form-select:focus,
+.form-select:focus-visible {
+  @include form-fields.rgfm-field-focus;
 }
 
-/* Animaciones ligeras (reemplazo de animate.css) */
+/* Animaciones ligeras: solo títulos de página, no bloques grandes con tablas */
 @media (prefers-reduced-motion: no-preference) {
   .rgfm-fade-in-down {
     animation: rgfm-fade-in-down 0.45s ease-out both;
-  }
-
-  .rgfm-fade-in-up {
-    animation: rgfm-fade-in-up 0.45s ease-out both;
   }
 }
 
@@ -48,18 +48,6 @@
   from {
     opacity: 0;
     transform: translateY(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes rgfm-fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
   }
 
   to {

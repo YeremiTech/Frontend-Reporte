@@ -27,15 +27,15 @@
 
   th,
   td {
-    padding: 0.45rem 0.6rem;
+    padding: 0.45rem 0.75rem;
     border-bottom: 1px solid #eef2f7;
     border-right: 1px solid #f4f6f9;
     text-align: left;
     white-space: nowrap;
-    min-width: 85px;
-    max-width: 280px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    width: max-content;
+    min-width: 4.5rem;
+    max-width: none;
+    overflow: visible;
   }
 
   thead th {
@@ -50,8 +50,10 @@
     letter-spacing: 0.03em;
   }
 
-  tbody tr:hover td {
-    background: #f0f6ff;
+  @media (hover: hover) {
+    tbody tr:hover td {
+      background: #f0f6ff;
+    }
   }
 
   .col-num {

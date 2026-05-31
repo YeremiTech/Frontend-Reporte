@@ -10,16 +10,16 @@ import {
 import { ApiErrorResponse, ResolvedApiError } from '../models/api-response.model';
 import { toSpanishUserMessage } from './error-message-locale';
 
-export function shortenApiMessage(text: string, max = API_ERROR_MESSAGE_MAX_LENGTH): string {
+function shortenApiMessage(text: string, max = API_ERROR_MESSAGE_MAX_LENGTH): string {
   const trimmed = text.trim();
   return trimmed.length <= max ? trimmed : `${trimmed.slice(0, max - 1)}…`;
 }
 
-export function messageForCode(code: ApiErrorCodeType): string {
+function messageForCode(code: ApiErrorCodeType): string {
   return API_ERROR_MESSAGES[code];
 }
 
-export function titleForCode(code: ApiErrorCodeType): string {
+function titleForCode(code: ApiErrorCodeType): string {
   return API_ERROR_TITLES[code];
 }
 
@@ -101,7 +101,7 @@ export function resolveFromApiBody(body: ApiErrorResponse): ResolvedApiError {
   return resolvedError(ApiErrorCode.UNKNOWN_ERROR);
 }
 
-export function resolveHttpStatus(status: number): ResolvedApiError {
+function resolveHttpStatus(status: number): ResolvedApiError {
   switch (status) {
     case 0:
       return resolvedError(ApiErrorCode.NETWORK_ERROR);

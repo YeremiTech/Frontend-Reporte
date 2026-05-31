@@ -61,7 +61,6 @@
   width: 100%;
   max-width: 440px;
   animation: login-card-float 5.5s ease-in-out infinite;
-  will-change: transform;
 }
 
 .login-card {
@@ -125,9 +124,11 @@
   font-size: 1rem;
   border-radius: 10px;
   box-shadow: 0 4px 14px rgb(26 58 90 / 32%);
+  gap: 0.35rem;
 
-  i[class*='bi-'] {
-    margin-right: 0.35rem;
+  .login-icon {
+    width: 1rem;
+    height: 1rem;
   }
 
   &:hover:not(:disabled) {
@@ -135,43 +136,9 @@
   }
 }
 
-.form-label {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #3d4f5f;
-  margin-bottom: 0.35rem;
-}
-
-.input-group-text {
-  background: #f1f5f9;
-  border-color: #c5d0dc;
-  color: #1a3a5a;
-}
-
-.login-card .form-control {
-  border-color: #c5d0dc;
-  border-radius: 0 8px 8px 0;
-  font-size: 0.9375rem;
-
-  &:focus,
-  &:focus-visible {
-    border-color: #c5d0dc !important;
-    box-shadow: none !important;
-    outline: none !important;
-  }
-}
-
-.login-card .input-group {
-  &:focus-within > .form-control,
-  &:focus-within > .input-group-text {
-    border-color: #c5d0dc !important;
-    box-shadow: none !important;
-    outline: none !important;
-  }
-}
-
-.login-card .input-group .input-group-text {
-  border-radius: 8px 0 0 8px;
+.login-card .rgfm-field .login-icon {
+  width: 1em;
+  height: 1em;
 }
 
 @keyframes login-card-float {

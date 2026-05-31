@@ -1,0 +1,24 @@
+<div class="block-columns-panel">
+  <div class="panel-header">
+    <h2>Asignar columnas</h2>
+    <div class="panel-actions">
+      <button type="button" class="btn btn-link" (click)="showAll.emit()">Todas</button>
+      <button type="button" class="btn btn-link" (click)="hideAll.emit()">Ninguna</button>
+    </div>
+  </div>
+  <div class="columns-grid">
+    @for (header of columnOrder(); track header) {
+      <label class="column-chip" [class.column-hidden]="!isVisible(header)">
+        <input
+          type="checkbox"
+          [checked]="isVisible(header)"
+          (change)="onToggle(header, $any($event.target).checked)"
+        />
+        <span class="column-chip__label">{{ header }}</span>
+      </label>
+    }
+  </div>
+  <p class="columns-panel-footer">
+    {{ visibleCount() }} de {{ columnOrder().length }} columnas visibles
+  </p>
+</div>

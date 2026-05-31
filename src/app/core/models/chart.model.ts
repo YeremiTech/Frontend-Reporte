@@ -1,18 +1,4 @@
-import type {
-  ApexAxisChartSeries,
-  ApexChart,
-  ApexDataLabels,
-  ApexFill,
-  ApexLegend,
-  ApexNonAxisChartSeries,
-  ApexMarkers,
-  ApexPlotOptions,
-  ApexResponsive,
-  ApexStroke,
-  ApexTitleSubtitle,
-  ApexXAxis,
-  ApexYAxis,
-} from 'ng-apexcharts';
+import type { ApexOptions } from 'apexcharts';
 
 export type ChartKind = 'bar' | 'donut' | 'radialBar' | 'line';
 
@@ -34,31 +20,9 @@ export interface ColumnMeta {
   distinctCount: number;
 }
 
-export interface AggregatedPoint {
-  label: string;
-  value: number;
-}
-
-export type ChartOptions = {
-  series?: ApexAxisChartSeries | ApexNonAxisChartSeries | number[];
-  chart?: ApexChart;
-  xaxis?: ApexXAxis;
-  yaxis?: ApexYAxis | ApexYAxis[];
-  title?: ApexTitleSubtitle;
-  dataLabels?: ApexDataLabels;
-  stroke?: ApexStroke;
-  fill?: ApexFill;
-  legend?: ApexLegend;
-  plotOptions?: ApexPlotOptions;
-  responsive?: ApexResponsive[];
-  colors?: string[];
-  labels?: string[];
-  markers?: ApexMarkers;
-};
+export type ChartOptions = ApexOptions;
 
 export interface ReportDatasetSnapshot {
   rows: Record<string, string>[];
   columns: string[];
-  sourceLabel?: string;
-  updatedAt: number;
 }

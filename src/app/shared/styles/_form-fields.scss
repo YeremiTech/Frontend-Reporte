@@ -1,0 +1,98 @@
+@mixin rgfm-field-focus {
+  outline: none;
+  border-color: #1a3a5a;
+  box-shadow: 0 0 0 3px rgb(26 58 90 / 12%);
+}
+
+@mixin rgfm-field-control {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:focus,
+  &:focus-visible {
+    @include rgfm-field-focus;
+  }
+}
+
+.rgfm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+
+  &__label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+
+    strong {
+      color: #1a3a5a;
+      font-weight: 800;
+    }
+  }
+
+  select,
+  input[type='text'],
+  input[type='password'],
+  .form-control,
+  .form-select {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 0.5rem 0.65rem;
+    font-size: 0.8125rem;
+    background: #fff;
+    color: #1e293b;
+    @include rgfm-field-control;
+
+    &:disabled {
+      background: #f1f5f9;
+      color: #94a3b8;
+    }
+  }
+
+  .form-select-sm,
+  select.form-select-sm {
+    padding: 0.375rem 0.65rem;
+    font-size: 0.8125rem;
+  }
+
+  input[type='range'] {
+    width: 100%;
+    margin: 0.15rem 0 0;
+    accent-color: #1a3a5a;
+  }
+
+  .input-group {
+    .form-control {
+      border-radius: 0 8px 8px 0;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9375rem;
+    }
+
+    .input-group-text {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px 0 0 8px;
+      background: #f1f5f9;
+      color: #1a3a5a;
+      transition: border-color 0.15s ease;
+    }
+
+    &:focus-within {
+      border-radius: 8px;
+      box-shadow: 0 0 0 3px rgb(26 58 90 / 12%);
+
+      .form-control,
+      .input-group-text {
+        border-color: #1a3a5a;
+        outline: none;
+      }
+
+      .form-control:focus,
+      .form-control:focus-visible {
+        box-shadow: none;
+      }
+    }
+  }
+}
