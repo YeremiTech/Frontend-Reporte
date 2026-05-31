@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { SidebarService } from '../../core/services/sidebar.service';
+import { prefetchRouteChunk } from '../../core/utils/route-prefetch';
 
 interface NavItem {
   label: string;
@@ -27,27 +28,29 @@ export class MainLayoutComponent {
     { label: 'Gráficos', route: '/graficos', icon: 'bi-bar-chart-fill' },
   ];
 
-  userDisplayName(): string {
+  readonly userDisplayName = computed(() => {
     const user = this.auth.currentUser();
     return user?.username?.toUpperCase() ?? 'USUARIO';
-  }
+  });
 
-  userEmail(): string {
+  readonly userEmail = computed(() => {
     const user = this.auth.currentUser();
     if (!user) {
       return 'usuario@reportes.local';
     }
     return `${user.username}@reportes.local`;
-  }
+  });
 
-  userRole(): string {
-    return this.auth.currentUser()?.role ?? 'USER';
-  }
+  readonly userRole = computed(() => this.auth.currentUser()?.role ?? 'USER');
 
   onNavigate(): void {
     if (typeof globalThis.window !== 'undefined' && globalThis.window.innerWidth < 992) {
       this.sidebar.collapse();
     }
+  }
+
+  prefetchRoute(route: string): void {
+    prefetchRouteChunk(route);
   }
 
   closeSidebar(): void {

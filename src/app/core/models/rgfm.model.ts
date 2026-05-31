@@ -1,3 +1,5 @@
+import { normalizeImportHeader } from '../utils/normalize-import-header';
+
 export interface RgfmRecord {
   id?: number;
   mes?: string;
@@ -33,6 +35,7 @@ export interface RgfmRecord {
   ventaNuevaRec?: number;
   ventaNuevaOt?: number;
   importedAt?: string;
+  extraData?: Record<string, string>;
 }
 
 export interface RgfmListResponse {
@@ -57,6 +60,7 @@ export interface RgfmQueryParams {
 
 export interface RgfmHeadersResponse {
   expectedHeaders: string[];
+  standardHeaders?: string[];
   totalColumns: number;
 }
 
@@ -70,6 +74,7 @@ export interface ImportResult {
 
 export interface SaveImportRequest {
   sourceFileName?: string;
+  headersFound?: string[];
   rows: Record<string, string>[];
 }
 
@@ -77,6 +82,8 @@ export interface SaveImportResult {
   rowsSaved: number;
   message: string;
   sourceFileName?: string;
+  headersPersisted?: string[];
+  dynamicColumnsAdded?: number;
 }
 
 export type RgfmTableRow = RgfmRecord | Record<string, string>;
@@ -151,18 +158,30 @@ export function mergeColumnOrder(headersFromExcel: string[], standardHeaders: st
 
 export function cellValueByHeader(record: RgfmRecord, header: string): string {
   const field = HEADER_FIELD_MAP[header];
-  if (!field) {
-    return '';
+  if (field) {
+    const rec = record as Record<string, unknown>;
+    const legacy = legacyJacksonKey(field);
+    const value = rec[field] ?? (legacy ? rec[legacy] : undefined);
+
+    if (value !== null && value !== undefined) {
+      return String(value);
+    }
   }
 
-  const rec = record as Record<string, unknown>;
-  const legacy = legacyJacksonKey(field);
-  const value = rec[field] ?? (legacy ? rec[legacy] : undefined);
-
-  if (value === null || value === undefined) {
-    return '';
+  const extra = record.extraData;
+  if (extra) {
+    if (header in extra) {
+      return extra[header] ?? '';
+    }
+    const normalizedHeader = normalizeImportHeader(header);
+    for (const [key, value] of Object.entries(extra)) {
+      if (normalizeImportHeader(key) === normalizedHeader) {
+        return value ?? '';
+      }
+    }
   }
-  return String(value);
+
+  return '';
 }
 
 export function cellValueForRow(row: RgfmTableRow, header: string): string {
@@ -174,4 +193,18 @@ export function cellValueForRow(row: RgfmTableRow, header: string): string {
     return cellValueByHeader(row as RgfmRecord, header);
   }
   return '';
+}
+
+/** Convierte registros de BD al formato de filas usado por gráficos y resumen. */
+export function rgfmRecordsToImportRows(
+  records: RgfmRecord[],
+  headers: string[]
+): Record<string, string>[] {
+  return records.map((record) => {
+    const row: Record<string, string> = {};
+    for (const header of headers) {
+      row[header] = cellValueByHeader(record, header);
+    }
+    return row;
+  });
 }

@@ -1,4 +1,4 @@
-const DEFERRED_STYLES = ['bootstrap.css', 'icons.css'] as const;
+const DEFERRED_STYLES = ['icons.css', 'bootstrap.css'] as const;
 
 export function loadDeferredStyles(): void {
   for (const href of DEFERRED_STYLES) {

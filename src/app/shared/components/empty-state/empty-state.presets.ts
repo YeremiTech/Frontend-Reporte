@@ -13,7 +13,8 @@ export const EMPTY_STATE_PRESETS = {
   resumen: {
     iconType: 'database',
     title: 'Sin datos para mostrar',
-    description: 'Importe un Excel en Reportes para ver el resumen por vendedor.',
+    description:
+      'Guarde la importación en la base de datos desde Reportes para ver el resumen por vendedor.',
     buttonLabel: 'Ir a Reportes',
     actionRoute: '/',
   },
@@ -21,7 +22,7 @@ export const EMPTY_STATE_PRESETS = {
     iconType: 'database',
     title: 'Sin datos para mostrar',
     description:
-      'Importe un Excel en Reportes. Las columnas y filas estarán disponibles aquí automáticamente.',
+      'Guarde la importación en la base de datos desde Reportes para generar gráficos.',
     buttonLabel: 'Ir a Reportes',
     actionRoute: '/',
   },

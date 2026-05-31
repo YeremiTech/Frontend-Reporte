@@ -1,5 +1,12 @@
 <app-page-shell title="Gráficos">
-  @if (!hasData()) {
+  @if (loading()) {
+    <app-loader
+      [overlay]="true"
+      message="Cargando datos desde la base de datos..."
+      color="#FFAA49"
+      [size]="48"
+    />
+  } @else if (!hasData()) {
     <app-empty-state
       [iconType]="emptyPreset.iconType"
       [title]="emptyPreset.title"
@@ -59,12 +66,12 @@
           </label>
 
           <label class="config-field">
-            <span>Categorías <strong>{{ config().topN }}</strong></span>
+            <span>Categorías <strong>{{ topNDraft() }}</strong></span>
             <input
               type="range"
               min="3"
               max="30"
-              [ngModel]="config().topN"
+              [ngModel]="topNDraft()"
               (ngModelChange)="onTopNChange($event)"
               aria-label="Máximo de categorías"
             />
@@ -87,21 +94,17 @@
         @if (!hasAnyChart()) {
           <p class="charts-no-chart">Seleccione una columna de categoría válida.</p>
         } @else {
-          @for (panel of chartPanels(); track panel.kind) {
+          @for (panel of chartPanels; track panel.kind) {
             <article class="chart-panel">
               <header class="chart-panel__header">
                 <i class="bi {{ panel.icon }}" aria-hidden="true"></i>
                 <h3>{{ panel.label }}</h3>
               </header>
               <div class="chart-panel__body">
-                @if (panel.options) {
-                  @defer (on viewport) {
-                    <app-apex-chart [options]="panel.options" />
-                  } @placeholder {
-                    <p class="chart-panel__empty">Cargando gráfico…</p>
-                  }
-                } @else {
-                  <p class="chart-panel__empty">Sin datos</p>
+                @defer (on viewport) {
+                  <app-apex-chart [options]="buildPanelOptions(panel.kind)" />
+                } @placeholder {
+                  <p class="chart-panel__empty">Cargando gráfico…</p>
                 }
               </div>
             </article>

@@ -13,6 +13,7 @@ export type VendorViewRowType = 'vendor-header' | 'detail' | 'summary-rec' | 'su
 
 /** Una fila de la tabla agrupada por vendedor (layout Excel). */
 export interface VendorViewRow {
+  rowKey: string;
   rowType: VendorViewRowType;
   vendedor: string;
   /** Solo en la primera fila del bloque del vendedor. */

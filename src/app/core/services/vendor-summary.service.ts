@@ -29,11 +29,35 @@ interface VendorTotals {
 
 @Injectable({ providedIn: 'root' })
 export class VendorSummaryService {
+  private viewCache: { key: string; result: VendorViewResult } | null = null;
+
   /**
    * Vista por vendedor (layout Excel). Solo filas que cumplen todas las columnas
    * obligatorias del detalle en la misma línea del import.
    */
   buildVendorView(rows: Record<string, string>[], columns: string[]): VendorViewResult {
+    const cacheKey = this.buildViewCacheKey(rows, columns);
+    if (this.viewCache?.key === cacheKey) {
+      return this.viewCache.result;
+    }
+
+    const result = this.buildVendorViewUncached(rows, columns);
+    this.viewCache = { key: cacheKey, result };
+    return result;
+  }
+
+  private buildViewCacheKey(rows: Record<string, string>[], columns: string[]): string {
+    const first = rows[0];
+    const last = rows.at(-1);
+    return [
+      rows.length,
+      columns.join('\u001e'),
+      first?.['LLAVE'] ?? first?.['n_id_doc'] ?? '',
+      last?.['LLAVE'] ?? last?.['n_id_doc'] ?? '',
+    ].join('|');
+  }
+
+  private buildVendorViewUncached(rows: Record<string, string>[], columns: string[]): VendorViewResult {
     const mapping = this.resolveMapping(columns);
     const missingFields = this.collectMissing(mapping);
 
@@ -61,6 +85,7 @@ export class VendorSummaryService {
       const rowSpan = 1 + vendorRows.length + summaryRows.length;
 
       viewRows.push({
+        rowKey: `${vendedor}::header`,
         rowType: 'vendor-header',
         vendedor,
         vendedorRowSpan: rowSpan,
@@ -70,17 +95,19 @@ export class VendorSummaryService {
         colProducto: 'Producto',
       });
 
-      for (const row of vendorRows) {
+      vendorRows.forEach((row, index) => {
+        const ruc = normalizeRucCell(getImportCell(row, mapping.ruc));
         viewRows.push({
+          rowKey: `${vendedor}::detail::${index}::${ruc}`,
           rowType: 'detail',
           vendedor,
           vendedorRowSpan: 0,
-          colRuc: normalizeRucCell(getImportCell(row, mapping.ruc)),
+          colRuc: ruc,
           colClientesOt: this.detailClientesOt(row, mapping),
           colRevOt: this.detailRevOt(row, mapping),
           colProducto: getImportCell(row, mapping.producto),
         });
-      }
+      });
 
       viewRows.push(...summaryRows);
     }
@@ -201,6 +228,7 @@ export class VendorSummaryService {
     const rows: VendorViewRow[] = [];
     if (totals.revRec > 0) {
       rows.push({
+        rowKey: `${vendedor}::summary-rec`,
         rowType: 'summary-rec',
         vendedor,
         vendedorRowSpan: 0,
@@ -212,6 +240,7 @@ export class VendorSummaryService {
     }
     if (totals.clientesRec > 0) {
       rows.push({
+        rowKey: `${vendedor}::summary-clientes-rec`,
         rowType: 'summary-clientes-rec',
         vendedor,
         vendedorRowSpan: 0,

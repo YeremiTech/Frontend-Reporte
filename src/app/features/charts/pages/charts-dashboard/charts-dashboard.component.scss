@@ -1,3 +1,5 @@
+@use '../../../../shared/styles/form-fields' as fields;
+
 .charts-config-card {
   flex-shrink: 0;
   background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
@@ -68,13 +70,7 @@
     font-size: 0.8125rem;
     background: #fff;
     color: #1e293b;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-
-    &:focus {
-      outline: none;
-      border-color: #1a3a5a;
-      box-shadow: 0 0 0 3px rgb(26 58 90 / 12%);
-    }
+    @include fields.rgfm-field-control;
 
     &:disabled {
       background: #f1f5f9;
@@ -105,26 +101,32 @@
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgb(15 23 42 / 6%);
-  overflow: hidden;
+  overflow: visible;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 260px;
 
   &__header {
     display: flex;
     align-items: center;
-    gap: 0.45rem;
-    padding: 0.55rem 0.85rem;
-    background: #f1f5f9;
-    border-bottom: 1px solid #e2e8f0;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.75rem 1.1rem;
+    background: #1a3a5a;
+    color: #fff;
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
 
     i {
-      font-size: 0.9rem;
+      font-size: 1rem;
       color: #ffaa49;
     }
 
     h3 {
       margin: 0;
-      font-size: 0.8125rem;
+      font-size: 0.9375rem;
       font-weight: 700;
-      color: #1a3a5a;
+      letter-spacing: 0.02em;
+      color: #fff;
     }
   }
 
@@ -132,10 +134,12 @@
     flex: 1;
     min-height: 260px;
     padding: 0.35rem 0.5rem 0.5rem;
+    overflow: visible;
 
     app-apex-chart {
       display: block;
       width: 100%;
+      overflow: visible;
     }
   }
 

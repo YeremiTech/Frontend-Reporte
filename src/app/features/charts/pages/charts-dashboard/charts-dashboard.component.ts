@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, afterNextRender, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type {
   ChartAggregation,
@@ -11,6 +11,7 @@ import { ReportDataStoreService } from '../../../../core/services/report-data-st
 import { ApexChartComponent } from '../../../../shared/components/apex-chart/apex-chart.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { EMPTY_STATE_PRESETS } from '../../../../shared/components/empty-state/empty-state.presets';
+import { LoaderComponent } from '../../../../shared/components/loader/loader.component';
 import { PageShellComponent } from '../../../../shared/components/page-shell/page-shell.component';
 
 const CHART_PANELS: { kind: ChartKind; label: string; icon: string }[] = [
@@ -32,13 +33,12 @@ export interface ChartPanelView {
   kind: ChartKind;
   label: string;
   icon: string;
-  options: ChartOptions | null;
 }
 
 @Component({
   selector: 'app-charts-dashboard',
   standalone: true,
-  imports: [FormsModule, ApexChartComponent, PageShellComponent, EmptyStateComponent],
+  imports: [FormsModule, ApexChartComponent, PageShellComponent, EmptyStateComponent, LoaderComponent],
   templateUrl: './charts-dashboard.component.html',
   styleUrl: './charts-dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,7 +49,13 @@ export class ChartsDashboardComponent {
   private readonly dataStore = inject(ReportDataStoreService);
   private readonly analytics = inject(ChartAnalyticsService);
 
+  readonly loading = this.dataStore.loading;
   readonly hasData = this.dataStore.hasData;
+  readonly topNDraft = signal(12);
+
+  private optionsCacheKey = '';
+  private readonly optionsCache = new Map<ChartKind, ChartOptions | null>();
+  private topNDebounceId: ReturnType<typeof setTimeout> | null = null;
 
   readonly columnMeta = computed(() => {
     const snap = this.dataStore.snapshot();
@@ -75,33 +81,59 @@ export class ChartsDashboardComponent {
     topN: 12,
   });
 
-  readonly chartPanels = computed((): ChartPanelView[] => {
+  readonly chartPanels = CHART_PANELS;
+
+  readonly hasAnyChart = computed(() => {
+    const snap = this.dataStore.snapshot();
+    const cfg = this.config();
+    return !!snap && !!cfg.categoryColumn;
+  });
+
+  buildPanelOptions(kind: ChartKind): ChartOptions | null {
     const snap = this.dataStore.snapshot();
     const cfg = this.config();
     if (!snap || !cfg.categoryColumn) {
-      return CHART_PANELS.map((p) => ({ ...p, options: null }));
+      return null;
     }
 
-    return CHART_PANELS.map((panel) => ({
-      ...panel,
-      options: this.analytics.buildChartOptions(
-        snap.rows,
-        {
-          kind: panel.kind,
-          categoryColumn: cfg.categoryColumn,
-          valueColumn: cfg.valueColumn,
-          aggregation: cfg.aggregation,
-          title: cfg.title,
-          topN: cfg.topN,
-        },
-        { compact: true }
-      ),
-    }));
-  });
+    const cacheKey = this.buildOptionsCacheKey(cfg, snap.rows.length);
+    if (this.optionsCacheKey !== cacheKey) {
+      this.optionsCacheKey = cacheKey;
+      this.optionsCache.clear();
+    }
 
-  readonly hasAnyChart = computed(() => this.chartPanels().some((p) => p.options !== null));
+    const cached = this.optionsCache.get(kind);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    const options = this.analytics.buildChartOptions(
+      snap.rows,
+      {
+        kind,
+        categoryColumn: cfg.categoryColumn,
+        valueColumn: cfg.valueColumn,
+        aggregation: cfg.aggregation,
+        title: cfg.title,
+        topN: cfg.topN,
+      },
+      { compact: true }
+    );
+    this.optionsCache.set(kind, options);
+    return options;
+  }
 
   constructor() {
+    afterNextRender(() => {
+      void this.dataStore.refreshFromDatabase();
+    });
+
+    effect(() => {
+      this.topNDraft.set(this.config().topN);
+      this.optionsCache.clear();
+      this.optionsCacheKey = '';
+    });
+
     effect(() => {
       const meta = this.columnMeta();
       if (!meta.length) {
@@ -143,6 +175,27 @@ export class ChartsDashboardComponent {
   }
 
   onTopNChange(topN: number): void {
-    this.config.update((c) => ({ ...c, topN: Math.max(3, Math.min(30, topN)) }));
+    const clamped = Math.max(3, Math.min(30, topN));
+    this.topNDraft.set(clamped);
+
+    if (this.topNDebounceId !== null) {
+      clearTimeout(this.topNDebounceId);
+    }
+
+    this.topNDebounceId = setTimeout(() => {
+      this.config.update((c) => ({ ...c, topN: clamped }));
+      this.topNDebounceId = null;
+    }, 250);
+  }
+
+  private buildOptionsCacheKey(cfg: SharedChartConfig, rowCount: number): string {
+    return [
+      cfg.categoryColumn,
+      cfg.valueColumn ?? '',
+      cfg.aggregation,
+      cfg.title,
+      cfg.topN,
+      rowCount,
+    ].join('|');
   }
 }

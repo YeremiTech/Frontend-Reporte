@@ -1,16 +1,14 @@
 @if (overlay()) {
   <div
-    class="loader-overlay"
+    class="loader-overlay__content"
     role="status"
     aria-live="polite"
     [attr.aria-label]="ariaLabel()"
   >
-    <div class="loader-overlay__content">
-      <ng-container *ngTemplateOutlet="loaderMark" />
-      @if (message()) {
-        <p class="loader-overlay__message">{{ message() }}</p>
-      }
-    </div>
+    <ng-container *ngTemplateOutlet="loaderMark" />
+    @if (message()) {
+      <p class="loader-overlay__message">{{ message() }}</p>
+    }
   </div>
 } @else {
   <ng-container *ngTemplateOutlet="loaderMark" />

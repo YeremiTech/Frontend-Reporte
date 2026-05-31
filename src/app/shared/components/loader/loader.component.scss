@@ -2,12 +2,24 @@
   display: inline-block;
 }
 
-:host:has(.loader-overlay) {
+:host([data-overlay-scope]) {
+  z-index: 1060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all;
+  background: rgb(255 255 255 / 72%);
+  backdrop-filter: blur(2px);
+}
+
+:host([data-overlay-scope='container']) {
+  position: absolute;
+  inset: 0;
+}
+
+:host([data-overlay-scope='viewport']) {
   position: fixed;
   inset: 0;
-  z-index: 1060;
-  display: block;
-  pointer-events: all;
 }
 
 .loader {
@@ -16,6 +28,7 @@
   position: relative;
   width: var(--loader-size);
   height: var(--loader-size);
+  flex-shrink: 0;
 }
 
 .loader span {
@@ -38,17 +51,6 @@
   animation: loader-blink 0.8s infinite ease-in-out;
 }
 
-.loader-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1060;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(2px);
-}
-
 .loader-overlay__content {
   display: flex;
   flex-direction: column;
@@ -61,6 +63,7 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: #4a5568;
+  text-align: center;
 }
 
 @keyframes loader-rotate {

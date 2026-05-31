@@ -14,7 +14,18 @@
     </div>
   }
 
-  <section class="block-main page-body-fill rgfm-fade-in-up">
+  <app-confirm-dialog
+    [open]="saveConfirmOpen()"
+    [variant]="saveToDbConfirm.variant ?? 'danger'"
+    [title]="saveToDbConfirm.title"
+    [message]="saveToDbConfirm.message"
+    [confirmLabel]="saveToDbConfirm.confirmLabel ?? 'Confirmar'"
+    [cancelLabel]="saveToDbConfirm.cancelLabel ?? 'Cancelar'"
+    (confirmed)="onSaveConfirmDialogConfirmed()"
+    (cancelled)="onSaveConfirmDialogCancelled()"
+  />
+
+  <section class="block-main page-body-fill">
     <input
       #fileInput
       type="file"
@@ -27,18 +38,28 @@
     <!-- Sub-bloque: filtros (izq) + acciones (der) en una fila -->
     <div class="block-actions-row">
       <div class="filters-group">
-        <label for="filter-mes">
-          <span class="filter-label">Mes</span>
-          <select id="filter-mes" class="form-select form-select-sm" [(ngModel)]="filterMes">
+        <label class="rgfm-field" for="filter-mes">
+          <span class="rgfm-field__label">Mes</span>
+          <select
+            id="filter-mes"
+            class="form-select form-select-sm"
+            [ngModel]="filterMes()"
+            (ngModelChange)="filterMes.set($event)"
+          >
             <option value="">Todos</option>
             @for (mes of meses(); track mes) {
               <option [value]="mes">{{ mes }}</option>
             }
           </select>
         </label>
-        <label for="filter-vendedor">
-          <span class="filter-label">Vendedor</span>
-          <select id="filter-vendedor" class="form-select form-select-sm" [(ngModel)]="filterVendedor">
+        <label class="rgfm-field" for="filter-vendedor">
+          <span class="rgfm-field__label">Vendedor</span>
+          <select
+            id="filter-vendedor"
+            class="form-select form-select-sm"
+            [ngModel]="filterVendedor()"
+            (ngModelChange)="filterVendedor.set($event)"
+          >
             <option value="">Todos</option>
             @for (v of vendedores(); track v) {
               <option [value]="v">{{ v }}</option>
@@ -90,31 +111,15 @@
       </div>
     </div>
 
-    @if (showColumnPanel()) {
-      <div class="block-columns-panel">
-        <div class="panel-header">
-          <h2>Asignar columnas</h2>
-          <div class="panel-actions">
-            <button type="button" class="btn btn-link" (click)="showAllColumns()">Todas</button>
-            <button type="button" class="btn btn-link" (click)="hideAllColumns()">Ninguna</button>
-          </div>
-        </div>
-        <div class="columns-grid">
-          @for (header of columnOrder(); track header) {
-            <label class="column-chip" [class.column-hidden]="!isColumnVisible(header)">
-              <input
-                type="checkbox"
-                [checked]="isColumnVisible(header)"
-                (change)="toggleColumnVisibility(header, $any($event.target).checked)"
-              />
-              <span class="column-chip__label">{{ header }}</span>
-            </label>
-          }
-        </div>
-        <p class="columns-panel-footer">
-          {{ displayColumns().length }} de {{ columnOrder().length }} columnas visibles
-        </p>
-      </div>
+    @defer (when showColumnPanel()) {
+      <app-rgfm-column-panel
+        [columnOrder]="columnOrder()"
+        [hiddenColumns]="hiddenColumns()"
+        [visibleCount]="displayColumns().length"
+        (visibilityChange)="onColumnVisibilityChange($event)"
+        (showAll)="showAllColumns()"
+        (hideAll)="hideAllColumns()"
+      />
     }
 
     <!-- Sub-bloque: tabla -->
@@ -123,7 +128,7 @@
         <p class="hint center">Marque columnas en <strong>Asignar columnas</strong>.</p>
       } @else {
         <div class="table-wrapper">
-          <table class="table table-sm table-hover mb-0" aria-label="Datos de reportes">
+          <table class="table table-sm mb-0" aria-label="Datos de reportes">
             <thead>
               <tr>
                 <th class="sticky-col" scope="col">#</th>
@@ -154,11 +159,11 @@
                   </td>
                 </tr>
               } @else {
-                @for (row of pageRows(); track trackRow(row, $index); let i = $index) {
+                @for (row of renderedRows(); track row.id) {
                   <tr>
-                    <td class="sticky-col">{{ rowNumber(i) }}</td>
-                    @for (header of displayColumns(); track header) {
-                      <td>{{ cellValue(row, header) }}</td>
+                    <td class="sticky-col">{{ row.index }}</td>
+                    @for (cell of row.cells; track $index) {
+                      <td>{{ cell }}</td>
                     }
                   </tr>
                 }

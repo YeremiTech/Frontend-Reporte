@@ -20,6 +20,9 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { LoaderComponent } from '../../../../shared/components/loader/loader.component';
 import { PageShellComponent } from '../../../../shared/components/page-shell/page-shell.component';
 import { TailgridsAlertComponent } from '../../../../shared/components/tailgrids-alert/tailgrids-alert.component';
+import { RgfmColumnPanelComponent } from '../../components/rgfm-column-panel/rgfm-column-panel.component';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { SAVE_TO_DB_CONFIRM } from '../../../../shared/components/confirm-dialog/confirm-dialog.model';
 import {
   cellValueForRow,
   ImportResult,
@@ -28,10 +31,23 @@ import {
   RgfmTableRow,
 } from '../../../../core/models/rgfm.model';
 
+export interface RenderedTableRow {
+  id: string | number;
+  index: number;
+  cells: string[];
+}
+
 @Component({
   selector: 'app-rgfm-dashboard',
   standalone: true,
-  imports: [FormsModule, TailgridsAlertComponent, LoaderComponent, PageShellComponent],
+  imports: [
+    FormsModule,
+    TailgridsAlertComponent,
+    LoaderComponent,
+    PageShellComponent,
+    RgfmColumnPanelComponent,
+    ConfirmDialogComponent,
+  ],
   templateUrl: './rgfm-dashboard.component.html',
   styleUrl: './rgfm-dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,6 +64,7 @@ export class RgfmDashboardComponent {
   readonly dataPersistedInDb = signal(false);
   previewRows = signal<Record<string, string>[]>([]);
   private lastImportedFileName = '';
+  private lastImportedHeaders: string[] = [];
 
   records = signal<RgfmRecord[]>([]);
   total = signal(0);
@@ -56,6 +73,8 @@ export class RgfmDashboardComponent {
 
   columnOrder = signal<string[]>([]);
   hiddenColumns = signal<Set<string>>(new Set());
+  private readonly baselineColumnOrder = signal<string[]>([]);
+  private readonly baselineHiddenColumns = signal<Set<string>>(new Set());
 
   readonly displayColumns = computed(() =>
     this.columnOrder().filter((header) => !this.hiddenColumns().has(header))
@@ -63,11 +82,13 @@ export class RgfmDashboardComponent {
 
   readonly filteredPreviewRows = computed(() => {
     let rows = this.previewRows();
-    if (this.filterMes) {
-      rows = rows.filter((row) => row['MES'] === this.filterMes);
+    const mes = this.filterMes();
+    const vendedor = this.filterVendedor();
+    if (mes) {
+      rows = rows.filter((row) => row['MES'] === mes);
     }
-    if (this.filterVendedor) {
-      rows = rows.filter((row) => row['c_vendedor'] === this.filterVendedor);
+    if (vendedor) {
+      rows = rows.filter((row) => row['c_vendedor'] === vendedor);
     }
     return rows;
   });
@@ -85,6 +106,17 @@ export class RgfmDashboardComponent {
     return this.records();
   });
 
+  readonly renderedRows = computed((): RenderedTableRow[] => {
+    const cols = this.displayColumns();
+    const rows = this.pageRows();
+    const page = this.page();
+    return rows.map((row, index) => ({
+      id: this.trackRow(row, index),
+      index: page * this.pageSize + index + 1,
+      cells: cols.map((header) => cellValueForRow(row, header)),
+    }));
+  });
+
   readonly effectiveTotal = computed(() =>
     this.usingPreviewData() ? this.filteredPreviewRows().length : this.total()
   );
@@ -93,7 +125,7 @@ export class RgfmDashboardComponent {
     this.usingPreviewData() ? this.previewTotalPages() : this.totalPages()
   );
 
-  readonly hasActiveFilters = computed(() => !!this.filterMes || !!this.filterVendedor);
+  readonly hasActiveFilters = computed(() => !!this.filterMes() || !!this.filterVendedor());
 
   readonly paginationRowsLabel = computed(() => {
     const visible = this.effectiveTotal();
@@ -110,10 +142,13 @@ export class RgfmDashboardComponent {
   meses = signal<string[]>([]);
   vendedores = signal<string[]>([]);
 
-  filterMes = '';
-  filterVendedor = '';
+  readonly filterMes = signal('');
+  readonly filterVendedor = signal('');
 
   showColumnPanel = signal(false);
+  saveConfirmOpen = signal(false);
+
+  readonly saveToDbConfirm = SAVE_TO_DB_CONFIRM;
 
   loading = signal(false);
   importing = signal(false);
@@ -168,8 +203,11 @@ export class RgfmDashboardComponent {
       probe: this.api.listRecords({ page: 0, size: 1 }),
     }).subscribe({
       next: ({ headers, filters, probe }) => {
-        this.columnOrder.set([...(headers.expectedHeaders ?? [])]);
-        this.hiddenColumns.set(new Set());
+        const order = [...(headers.expectedHeaders ?? [])];
+        const hidden = new Set<string>();
+        this.columnOrder.set(order);
+        this.hiddenColumns.set(hidden);
+        this.setBaselineColumnLayout(order, hidden);
         this.meses.set(filters.meses ?? []);
         this.vendedores.set(filters.vendedores ?? []);
         if ((probe.total ?? 0) > 0) {
@@ -199,8 +237,8 @@ export class RgfmDashboardComponent {
       .listRecords({
         page: this.page(),
         size: this.pageSize,
-        mes: this.filterMes || undefined,
-        vendedor: this.filterVendedor || undefined,
+        mes: this.filterMes() || undefined,
+        vendedor: this.filterVendedor() || undefined,
       })
       .subscribe({
         next: (response) => {
@@ -230,9 +268,10 @@ export class RgfmDashboardComponent {
   }
 
   clearFilters(): void {
-    this.filterMes = '';
-    this.filterVendedor = '';
+    this.filterMes.set('');
+    this.filterVendedor.set('');
     this.page.set(0);
+    this.restoreBaselineColumnLayout();
     if (this.usingPreviewData()) {
       this.refreshPreviewFilters();
       return;
@@ -257,12 +296,8 @@ export class RgfmDashboardComponent {
     }
   }
 
-  rowNumber(index: number): number {
-    return this.page() * this.pageSize + index + 1;
-  }
-
-  cellValue(row: RgfmTableRow, header: string): string {
-    return cellValueForRow(row, header);
+  onColumnVisibilityChange(event: { header: string; visible: boolean }): void {
+    this.toggleColumnVisibility(event.header, event.visible);
   }
 
   trackRow(row: RgfmTableRow, index: number): string | number {
@@ -294,12 +329,20 @@ export class RgfmDashboardComponent {
       return;
     }
 
-    const confirmed = window.confirm(
-      'Se eliminarán todos los datos anteriores en la base de datos y se guardará esta importación. ¿Desea continuar?'
-    );
-    if (!confirmed) {
-      return;
-    }
+    this.saveConfirmOpen.set(true);
+  }
+
+  onSaveConfirmDialogConfirmed(): void {
+    this.saveConfirmOpen.set(false);
+    this.executeSaveToDatabase();
+  }
+
+  onSaveConfirmDialogCancelled(): void {
+    this.saveConfirmOpen.set(false);
+  }
+
+  private executeSaveToDatabase(): void {
+    const rows = this.previewRows();
 
     this.saving.set(true);
     this.toast.dismiss();
@@ -308,18 +351,25 @@ export class RgfmDashboardComponent {
       .saveImport({
         rows,
         sourceFileName: this.lastImportedFileName || undefined,
+        headersFound: this.lastImportedHeaders,
       })
       .subscribe({
         next: (result) => {
-          this.syncReportDataStore(this.lastImportedFileName || result.sourceFileName);
           this.usingPreviewData.set(false);
           this.dataPersistedInDb.set(true);
           this.previewRows.set([]);
           this.page.set(0);
-          this.filterMes = '';
-          this.filterVendedor = '';
+          this.filterMes.set('');
+          this.filterVendedor.set('');
+          if (result.headersPersisted?.length) {
+            this.applyPersistedColumnLayout(result.headersPersisted, this.lastImportedHeaders);
+          } else {
+            this.refreshColumnLayoutFromApi();
+          }
+          this.lastImportedHeaders = [];
           this.loadFilterOptions();
           this.loadRecords();
+          void this.reportDataStore.refreshFromDatabase({ force: true });
           this.toast.showSuccess(
             'Guardado en BD',
             result.message || `${result.rowsSaved} filas guardadas.`
@@ -349,8 +399,12 @@ export class RgfmDashboardComponent {
     this.api.importExcel(file!).subscribe({
       next: (result) => {
         this.applyImportedColumnLayout(result);
+        this.lastImportedHeaders = [...(result.headersFound ?? [])];
         this.usingPreviewData.set(true);
         this.dataPersistedInDb.set(false);
+        this.reportDataStore.clear();
+        this.filterMes.set('');
+        this.filterVendedor.set('');
         this.previewRows.set(result.rows ?? []);
         this.lastImportedFileName = file!.name;
         this.page.set(0);
@@ -360,9 +414,6 @@ export class RgfmDashboardComponent {
           `${result.rowsImported} filas · ${result.headersFound.length} columnas. Use «Guardar en BD» para persistir.`
         );
         this.importing.set(false);
-        this.filterMes = '';
-        this.filterVendedor = '';
-        this.syncReportDataStore(file!.name);
         input.value = '';
       },
       error: (err) => {
@@ -381,6 +432,39 @@ export class RgfmDashboardComponent {
 
     this.columnOrder.set(order);
     this.hiddenColumns.set(hidden);
+    this.setBaselineColumnLayout(order, hidden);
+  }
+
+  private applyPersistedColumnLayout(persistedHeaders: string[], importedHeaders: string[]): void {
+    const order = [...persistedHeaders];
+    const foundSet = new Set(importedHeaders);
+    const hidden = new Set(order.filter((header) => !foundSet.has(header)));
+
+    this.columnOrder.set(order);
+    this.hiddenColumns.set(hidden);
+    this.setBaselineColumnLayout(order, hidden);
+  }
+
+  private refreshColumnLayoutFromApi(): void {
+    this.api.getHeaders().subscribe({
+      next: (headers) => {
+        const order = [...(headers.expectedHeaders ?? [])];
+        this.columnOrder.set(order);
+        this.hiddenColumns.set(new Set());
+        this.setBaselineColumnLayout(order, new Set());
+      },
+      error: (err) => this.toast.showError(err),
+    });
+  }
+
+  private setBaselineColumnLayout(order: string[], hidden: Set<string>): void {
+    this.baselineColumnOrder.set([...order]);
+    this.baselineHiddenColumns.set(new Set(hidden));
+  }
+
+  private restoreBaselineColumnLayout(): void {
+    this.columnOrder.set([...this.baselineColumnOrder()]);
+    this.hiddenColumns.set(new Set(this.baselineHiddenColumns()));
   }
 
   onColumnDragStart(header: string, event: DragEvent): void {
@@ -463,8 +547,8 @@ export class RgfmDashboardComponent {
     }
 
     const filters = {
-      mes: this.filterMes || undefined,
-      vendedor: this.filterVendedor || undefined,
+      mes: this.filterMes() || undefined,
+      vendedor: this.filterVendedor() || undefined,
     };
 
     this.api
@@ -487,10 +571,6 @@ export class RgfmDashboardComponent {
       });
   }
 
-  isColumnVisible(header: string): boolean {
-    return !this.hiddenColumns().has(header);
-  }
-
   toggleColumnVisibility(header: string, visible: boolean): void {
     const hidden = new Set(this.hiddenColumns());
     if (visible) {
@@ -499,17 +579,14 @@ export class RgfmDashboardComponent {
       hidden.add(header);
     }
     this.hiddenColumns.set(hidden);
-    this.syncReportDataStoreColumns();
   }
 
   showAllColumns(): void {
     this.hiddenColumns.set(new Set());
-    this.syncReportDataStoreColumns();
   }
 
   hideAllColumns(): void {
     this.hiddenColumns.set(new Set(this.columnOrder()));
-    this.syncReportDataStoreColumns();
   }
 
   isColumnDragTarget(header: string): boolean {
@@ -538,24 +615,6 @@ export class RgfmDashboardComponent {
     anchor.download = filename;
     anchor.click();
     window.URL.revokeObjectURL(url);
-  }
-
-  private syncReportDataStore(sourceLabel?: string): void {
-    if (!this.usingPreviewData() || !this.previewRows().length) {
-      return;
-    }
-    this.reportDataStore.setDataset({
-      rows: this.previewRows(),
-      columns: this.displayColumns(),
-      sourceLabel,
-    });
-  }
-
-  private syncReportDataStoreColumns(): void {
-    if (!this.usingPreviewData() || !this.previewRows().length) {
-      return;
-    }
-    this.reportDataStore.updateColumns(this.displayColumns());
   }
 
   private timestamp(): string {

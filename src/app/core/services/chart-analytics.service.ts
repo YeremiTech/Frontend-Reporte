@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import type { ApexChart } from 'ng-apexcharts';
 import type {
   AggregatedPoint,
   ChartBuildConfig,
@@ -165,13 +166,51 @@ export class ChartAnalyticsService {
     }
   }
 
+  private buildToolbar(title: string): NonNullable<ApexChart['toolbar']> {
+    const filename = this.exportFileName(title);
+    return {
+      show: true,
+      tools: {
+        download: true,
+        selection: false,
+        zoom: false,
+        zoomin: false,
+        zoomout: false,
+        pan: false,
+        reset: false,
+      },
+      export: {
+        csv: {
+          filename,
+          columnDelimiter: ',',
+          headerCategory: 'category',
+          headerValue: 'value',
+        },
+        svg: { filename },
+        png: { filename },
+      },
+    };
+  }
+
+  private exportFileName(title: string): string {
+    return (
+      title
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\w\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '_')
+        .slice(0, 48) || 'grafico'
+    );
+  }
+
   private buildBar(labels: string[], values: number[], title: string, compact: boolean): ChartOptions {
     return {
       series: [{ data: values }],
       chart: {
         height: compact ? 240 : 360,
         type: 'bar',
-        toolbar: { show: !compact },
+        toolbar: this.buildToolbar(title),
       },
       colors: CHART_PALETTE,
       plotOptions: {
@@ -205,7 +244,7 @@ export class ChartAnalyticsService {
       chart: {
         height: compact ? 240 : 360,
         type: 'line',
-        toolbar: { show: !compact },
+        toolbar: this.buildToolbar(title),
         zoom: { enabled: false },
       },
       colors: ['#FFAA49'],
@@ -221,7 +260,12 @@ export class ChartAnalyticsService {
     return {
       series: values,
       labels,
-      chart: { width: '100%', height: compact ? 260 : 380, type: 'donut' },
+      chart: {
+        width: '100%',
+        height: compact ? 260 : 380,
+        type: 'donut',
+        toolbar: this.buildToolbar(title),
+      },
       colors: CHART_PALETTE,
       plotOptions: {
         pie: { startAngle: -90, endAngle: 270 },
@@ -262,7 +306,11 @@ export class ChartAnalyticsService {
     return {
       series: normalized,
       labels,
-      chart: { height: compact ? 270 : 390, type: 'radialBar' },
+      chart: {
+        height: compact ? 270 : 390,
+        type: 'radialBar',
+        toolbar: this.buildToolbar(title),
+      },
       colors: CHART_PALETTE,
       plotOptions: {
         radialBar: {

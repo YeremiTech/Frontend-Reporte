@@ -16,6 +16,8 @@
           [routerLink]="item.route"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: item.route === '/' }"
+          (mouseenter)="prefetchRoute(item.route)"
+          (focus)="prefetchRoute(item.route)"
           (click)="onNavigate()"
         >
           <i class="bi" [class]="item.icon" aria-hidden="true"></i>

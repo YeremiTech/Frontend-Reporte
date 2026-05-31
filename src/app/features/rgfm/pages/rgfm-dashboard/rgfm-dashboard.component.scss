@@ -29,26 +29,8 @@
   align-items: flex-end;
   gap: 0.55rem;
 
-  label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    margin: 0;
-  }
-
-  .filter-label {
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: #3d4f5f;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-
-  .form-select {
+  .rgfm-field {
     min-width: 140px;
-    border-radius: 8px;
-    border-color: #c5d0dc;
-    font-size: 0.85rem;
   }
 }
 
@@ -62,81 +44,6 @@
 
 .hidden-input {
   display: none;
-}
-
-.block-columns-panel {
-  flex-shrink: 0;
-  padding: 0.65rem 1rem 0.75rem;
-  border-bottom: 1px solid #eef2f7;
-  background: #f8fafc;
-}
-
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-
-  h2 {
-    margin: 0;
-    font-size: 0.95rem;
-    color: #102a43;
-  }
-}
-
-.panel-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.1rem;
-}
-
-.columns-grid {
-  display: flex;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  gap: 0.35rem 0.5rem;
-  padding: 0.5rem;
-  background: #fff;
-  border-radius: 8px;
-  border: 1px solid #e8edf3;
-  overflow: visible;
-}
-
-.column-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.78rem;
-  line-height: 1.25;
-  cursor: pointer;
-  border-radius: 6px;
-  padding: 0.2rem 0.45rem;
-  background: #f4f7fb;
-  border: 1px solid #e2e8f0;
-  max-width: 100%;
-
-  &.column-hidden {
-    opacity: 0.55;
-    background: #fafbfc;
-  }
-
-  input[type='checkbox'] {
-    flex-shrink: 0;
-    margin: 0;
-    cursor: pointer;
-  }
-}
-
-.column-chip__label {
-  word-break: break-word;
-}
-
-.columns-panel-footer {
-  margin: 0.45rem 0 0;
-  font-size: 0.78rem;
-  color: #5f6b7a;
 }
 
 .drag-handle {
@@ -183,15 +90,15 @@ table {
 
 th,
 td {
-  padding: 0.45rem 0.6rem;
+  padding: 0.45rem 0.75rem;
   border-bottom: 1px solid #eef2f7;
   border-right: 1px solid #f4f6f9;
   text-align: left;
   white-space: nowrap;
-  min-width: 85px;
-  max-width: 260px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  width: max-content;
+  min-width: 4.5rem;
+  max-width: none;
+  overflow: visible;
 }
 
 thead th {
@@ -219,12 +126,14 @@ thead .sticky-col {
   background: #0d2236;
 }
 
-tbody tr:hover td {
-  background: #f0f6ff;
-}
+@media (hover: hover) {
+  tbody tr:hover td {
+    background: #f0f6ff;
+  }
 
-tbody tr:hover .sticky-col {
-  background: #e8f2ff;
+  tbody tr:hover .sticky-col {
+    background: #e8f2ff;
+  }
 }
 
 .empty-row {

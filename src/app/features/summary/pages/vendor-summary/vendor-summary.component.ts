@@ -1,14 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, afterNextRender, computed, inject, signal } from '@angular/core';
 import { ReportDataStoreService } from '../../../../core/services/report-data-store.service';
 import { VendorSummaryService } from '../../../../core/services/vendor-summary.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { EMPTY_STATE_PRESETS } from '../../../../shared/components/empty-state/empty-state.presets';
+import { LoaderComponent } from '../../../../shared/components/loader/loader.component';
 import { PageShellComponent } from '../../../../shared/components/page-shell/page-shell.component';
 
 @Component({
   selector: 'app-vendor-summary',
   standalone: true,
-  imports: [PageShellComponent, EmptyStateComponent],
+  imports: [PageShellComponent, EmptyStateComponent, LoaderComponent],
   templateUrl: './vendor-summary.component.html',
   styleUrl: './vendor-summary.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -19,11 +20,18 @@ export class VendorSummaryComponent {
   readonly dataStore = inject(ReportDataStoreService);
   private readonly vendorReport = inject(VendorSummaryService);
 
+  readonly loading = this.dataStore.loading;
+  readonly hasData = this.dataStore.hasData;
+
+  constructor() {
+    afterNextRender(() => {
+      void this.dataStore.refreshFromDatabase();
+    });
+  }
+
   /** Vendedores completos por página (evita cortar un bloque y romper rowspan). */
   readonly vendorsPerPage = 8;
   readonly page = signal(0);
-
-  readonly hasData = this.dataStore.hasData;
 
   readonly report = computed(() => {
     const snap = this.dataStore.snapshot();
