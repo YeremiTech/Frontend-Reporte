@@ -1,0 +1,12 @@
+<header class="block-title" [class]="animationClass()">
+  <button
+    type="button"
+    class="btn-title-menu"
+    (click)="sidebar.toggle()"
+    [attr.aria-label]="sidebar.collapsed() ? 'Abrir menú' : 'Cerrar menú'"
+    [attr.aria-expanded]="!sidebar.collapsed()"
+  >
+    <i class="bi {{ sidebar.collapsed() ? 'bi-list' : 'bi-x-lg' }}" aria-hidden="true"></i>
+  </button>
+  <h1 class="title-center">{{ title() }}</h1>
+</header>

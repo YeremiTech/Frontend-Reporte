@@ -1,0 +1,33 @@
+@use './app/shared/styles/rgfm-buttons';
+
+:root {
+  --app-bg: #eef2f7;
+  --primary: #1a3a5a;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  background: var(--app-bg);
+  color: #202124;
+}
+
+app-root {
+  display: block;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.block-actions-row {
+  min-height: 3.25rem;
+}

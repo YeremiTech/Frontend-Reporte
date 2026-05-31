@@ -1,0 +1,129 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "comisiones-frontend": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:application",
+          "options": {
+            "outputPath": "dist/comisiones-frontend",
+            "index": "src/index.html",
+            "browser": "src/main.ts",
+            "polyfills": [
+              "zone.js"
+            ],
+            "tsConfig": "tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
+            "stylePreprocessorOptions": {
+              "includePaths": ["node_modules"],
+              "sass": {
+                "silenceDeprecations": ["import"]
+              }
+            },
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
+            ],
+            "styles": [
+              "src/critical.scss",
+              "src/styles.scss",
+              {
+                "input": "src/bootstrap-custom.scss",
+                "inject": false,
+                "bundleName": "bootstrap"
+              },
+              {
+                "input": "src/bootstrap-icons-subset.scss",
+                "inject": false,
+                "bundleName": "icons"
+              }
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": true
+                },
+                "fonts": {
+                  "inline": true
+                }
+              },
+              "sourceMap": false,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "8kB",
+                  "maximumError": "12kB"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": {
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                }
+              },
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.development.ts"
+                }
+              ]
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json",
+            "prebundle": {
+              "exclude": ["xlsx"]
+            }
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "comisiones-frontend:build:production"
+            },
+            "development": {
+              "buildTarget": "comisiones-frontend:build:development",
+              "proxyConfig": "proxy.conf.json"
+            }
+          },
+          "defaultConfiguration": "development"
+        }
+      }
+    }
+  },
+  "cli": {
+    "analytics": "26562501-28e5-4876-ac39-25b12a8a5883"
+  }
+}

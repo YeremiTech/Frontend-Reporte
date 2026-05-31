@@ -1,0 +1,78 @@
+<app-page-shell title="Resumen">
+  @if (!hasData()) {
+    <app-empty-state
+      [iconType]="emptyPreset.iconType"
+      [title]="emptyPreset.title"
+      [description]="emptyPreset.description"
+      [buttonLabel]="emptyPreset.buttonLabel"
+      [showButton]="true"
+      [actionRoute]="emptyPreset.actionRoute"
+    />
+  } @else {
+    <section class="data-panel page-body-fill" aria-label="Resumen por vendedor">
+      <div class="data-table-wrap">
+        <table class="data-table data-table--vendor-view table table-sm mb-0" aria-label="Resumen por vendedor">
+          <thead>
+            <tr>
+              <th scope="col" class="col-vendedor">Vendedor</th>
+              <th scope="col">RUC</th>
+              <th scope="col" class="col-num">N° clientes OT</th>
+              <th scope="col" class="col-num">Rev. OT</th>
+              <th scope="col">Producto</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (pageRows().length === 0) {
+              <tr>
+                <td colspan="5" class="empty-row">No hay datos para mostrar.</td>
+              </tr>
+            } @else {
+              @for (row of pageRows(); track $index) {
+                <tr
+                  [class.row-vendor-header]="row.rowType === 'vendor-header'"
+                  [class.row-summary]="row.rowType === 'summary-rec' || row.rowType === 'summary-clientes-rec'"
+                  [class.row-detail]="row.rowType === 'detail'"
+                >
+                  @if (row.vendedorRowSpan > 0) {
+                    <td class="col-vendedor" [attr.rowspan]="row.vendedorRowSpan">
+                      {{ row.vendedor }}
+                    </td>
+                  }
+                  <td class="col-ruc">{{ row.colRuc }}</td>
+                  <td class="col-num">{{ row.colClientesOt }}</td>
+                  <td class="col-num">{{ row.colRevOt }}</td>
+                  <td>{{ row.colProducto }}</td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (totalPages() > 1) {
+        <div class="summary-pagination">
+          <span>Página {{ page() + 1 }} de {{ totalPages() }} ({{ vendorsPerPage }} vendedores por página)</span>
+          <div class="summary-pagination__controls">
+            <button
+              type="button"
+              class="btn btn-rgfm-page btn-sm"
+              (click)="changePage(page() - 1)"
+              [disabled]="page() === 0"
+            >
+              Anterior
+            </button>
+            <span class="page-indicator">{{ page() + 1 }} / {{ totalPages() }}</span>
+            <button
+              type="button"
+              class="btn btn-rgfm-page btn-sm"
+              (click)="changePage(page() + 1)"
+              [disabled]="page() >= totalPages() - 1"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
+      }
+    </section>
+  }
+</app-page-shell>

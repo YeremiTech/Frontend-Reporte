@@ -1,0 +1,32 @@
+@if (overlay()) {
+  <div
+    class="loader-overlay"
+    role="status"
+    aria-live="polite"
+    [attr.aria-label]="ariaLabel()"
+  >
+    <div class="loader-overlay__content">
+      <ng-container *ngTemplateOutlet="loaderMark" />
+      @if (message()) {
+        <p class="loader-overlay__message">{{ message() }}</p>
+      }
+    </div>
+  </div>
+} @else {
+  <ng-container *ngTemplateOutlet="loaderMark" />
+}
+
+<ng-template #loaderMark>
+  <div
+    class="loader"
+    [style.--loader-color]="color()"
+    [style.--loader-size.px]="size()"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true">
+      <path
+        d="M64 32C28.7 32 0 60.7 0 96v64c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zm280 72a24 24 0 1 1 0 48 24 24 0 1 1 0-48zm48 24a24 24 0 1 1 48 0 24 24 0 1 1 -48 0zM64 288c-35.3 0-64 28.7-64 64v64c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V352c0-35.3-28.7-64-64-64H64zm280 72a24 24 0 1 1 0 48 24 24 0 1 1 0-48zm56 24a24 24 0 1 1 48 0 24 24 0 1 1 -48 0z"
+      />
+    </svg>
+    <span></span>
+  </div>
+</ng-template>

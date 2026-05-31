@@ -1,0 +1,74 @@
+.data-table--vendor-view {
+  .col-vendedor {
+    min-width: 160px;
+    max-width: 220px;
+    font-weight: 700;
+    color: #102a43;
+    vertical-align: top;
+    text-align: left;
+    white-space: normal;
+    background: #f8fafc;
+    border-right: 2px solid #d1d5db;
+  }
+
+  tr.row-vendor-header td {
+    background: #fffbeb;
+    font-weight: 700;
+    color: #1f2937;
+    border-bottom: 2px solid #c9a227;
+  }
+
+  tr.row-vendor-header .col-vendedor {
+    background: #eef2f7;
+    vertical-align: middle;
+  }
+
+  tr.row-detail td {
+    background: #fff;
+  }
+
+  tr.row-summary td {
+    background: #e8dcc8;
+    font-weight: 600;
+  }
+
+  tr.row-summary .col-ruc {
+    font-style: italic;
+    color: #374151;
+  }
+
+  .col-ruc {
+    min-width: 100px;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.summary-pagination {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.65rem 1rem;
+  border-top: 1px solid #eef2f7;
+  background: #fafbfc;
+  font-size: 0.8125rem;
+  color: #4a5568;
+}
+
+.summary-pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.page-indicator {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #102a43;
+  padding: 0 0.65rem;
+  min-width: 4.5rem;
+  text-align: center;
+}

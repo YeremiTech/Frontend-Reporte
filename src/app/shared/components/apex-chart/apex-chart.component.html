@@ -1,0 +1,18 @@
+@if (options(); as opts) {
+  <apx-chart
+    [series]="opts.series!"
+    [chart]="opts.chart!"
+    [labels]="opts.labels ?? []"
+    [xaxis]="opts.xaxis ?? {}"
+    [yaxis]="opts.yaxis ?? {}"
+    [title]="opts.title ?? {}"
+    [dataLabels]="opts.dataLabels ?? {}"
+    [stroke]="opts.stroke ?? {}"
+    [fill]="opts.fill ?? {}"
+    [legend]="opts.legend ?? {}"
+    [plotOptions]="opts.plotOptions ?? {}"
+    [responsive]="opts.responsive ?? []"
+    [colors]="opts.colors ?? []"
+    [markers]="opts.markers ?? {}"
+  />
+}

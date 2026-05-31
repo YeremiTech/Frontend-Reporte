@@ -1,0 +1,47 @@
+<div
+  class="empty-state"
+  role="status"
+  aria-live="polite"
+  [attr.aria-labelledby]="titleId"
+  [attr.aria-describedby]="hasDescription() ? descriptionId : null"
+>
+  <div class="empty-state__center">
+    <div class="empty-state__panel">
+      <div class="empty-state__body">
+        <div class="empty-state__icon-box" aria-hidden="true">
+          @if (useDatabaseIcon()) {
+            <app-empty-state-database-icon [size]="48" [muted]="true" />
+          } @else {
+            <i [class]="iconClass() + ' empty-state__icon-bootstrap'"></i>
+          }
+        </div>
+
+        <h2 [id]="titleId" class="empty-state__title">{{ title() }}</h2>
+
+        @if (hasDescription()) {
+          <p [id]="descriptionId" class="empty-state__description">{{ description() }}</p>
+        }
+
+        @if (displayButton()) {
+          <div class="empty-state__actions">
+            @if (actionRoute()) {
+              <a [routerLink]="actionRoute()!" class="btn btn-rgfm-primary btn-sm empty-state__btn">
+                {{ buttonLabel() }}
+                @if (buttonIcon()) {
+                  <i [class]="buttonIconClass()" aria-hidden="true"></i>
+                }
+              </a>
+            } @else {
+              <button type="button" class="btn btn-rgfm-primary btn-sm empty-state__btn">
+                {{ buttonLabel() }}
+                @if (buttonIcon()) {
+                  <i [class]="buttonIconClass()" aria-hidden="true"></i>
+                }
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,44 @@
+<div class="app-shell" [class.sidebar-collapsed]="sidebar.collapsed()">
+  <aside class="sidebar" aria-label="Menú principal">
+    <div class="sidebar-profile">
+      <div class="avatar">
+        <i class="bi bi-person-fill"></i>
+      </div>
+      <h2 class="profile-name">{{ userDisplayName() }}</h2>
+      <p class="profile-email">{{ userEmail() }}</p>
+      <span class="profile-role">{{ userRole() }}</span>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Navegación">
+      @for (item of navItems; track item.route) {
+        <a
+          class="nav-item"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.route === '/' }"
+          (click)="onNavigate()"
+        >
+          <i class="bi" [class]="item.icon" aria-hidden="true"></i>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <button type="button" class="nav-item nav-logout" (click)="logout()">
+        <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+        <span class="nav-label">Cerrar</span>
+      </button>
+    </div>
+  </aside>
+
+  @if (!sidebar.collapsed()) {
+    <div class="sidebar-backdrop" (click)="closeSidebar()" aria-hidden="true"></div>
+  }
+
+  <main id="contenido-principal" class="main-content">
+    <div class="content-body">
+      <router-outlet />
+    </div>
+  </main>
+</div>

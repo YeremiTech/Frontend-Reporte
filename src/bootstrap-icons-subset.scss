@@ -1,0 +1,50 @@
+@font-face {
+  font-display: optional;
+  font-family: 'bootstrap-icons';
+  src: url('/fonts/bootstrap-icons.woff2') format('woff2');
+}
+
+.bi::before,
+[class^='bi-']::before,
+[class*=' bi-']::before {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  min-width: 1em;
+  min-height: 1em;
+  font-family: bootstrap-icons !important;
+  font-style: normal;
+  font-weight: normal !important;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  vertical-align: -0.125em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.bi-list::before { content: '\f479'; }
+.bi-x-lg::before { content: '\f659'; }
+.bi-funnel::before { content: '\f3e1'; }
+.bi-upload::before { content: '\f603'; }
+.bi-download::before { content: '\f30a'; }
+.bi-layout-three-columns::before { content: '\f465'; }
+.bi-grip-vertical::before { content: '\f3fe'; }
+.bi-person-fill::before { content: '\f4da'; }
+.bi-person::before { content: '\f4e1'; }
+.bi-box-arrow-right::before { content: '\f1c3'; }
+.bi-box-arrow-in-right::before { content: '\f1be'; }
+.bi-grid-1x2-fill::before { content: '\f3f3'; }
+.bi-exclamation-triangle-fill::before { content: '\f33a'; }
+.bi-lock::before { content: '\f47b'; }
+.bi-check-circle-fill::before { content: '\f26a'; }
+.bi-x-circle-fill::before { content: '\f622'; }
+.bi-info-circle-fill::before { content: '\f430'; }
+.bi-bar-chart-fill::before { content: '\f17a'; }
+.bi-clipboard-data-fill::before { content: '\f71c'; }
+.bi-database-check::before { content: '\f8b0'; }
+.bi-database-add::before { content: '\f8af'; }
+.bi-sliders2::before { content: '\f789'; }
+.bi-graph-up::before { content: '\f3f2'; }
+.bi-pie-chart-fill::before { content: '\f4e8'; }
+.bi-bullseye::before { content: '\f1de'; }

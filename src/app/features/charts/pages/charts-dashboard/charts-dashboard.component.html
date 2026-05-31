@@ -1,0 +1,113 @@
+<app-page-shell title="Gráficos">
+  @if (!hasData()) {
+    <app-empty-state
+      [iconType]="emptyPreset.iconType"
+      [title]="emptyPreset.title"
+      [description]="emptyPreset.description"
+      [buttonLabel]="emptyPreset.buttonLabel"
+      [showButton]="true"
+      [actionRoute]="emptyPreset.actionRoute"
+    />
+  } @else {
+    <div class="page-body-stack page-body-fill">
+      <section class="charts-config-card page-body-stack__section page-body-stack__section--fixed" aria-label="Configuración">
+        <header class="charts-config-card__header">
+          <i class="bi bi-sliders2" aria-hidden="true"></i>
+          <h2>Configuración</h2>
+        </header>
+
+        <div class="charts-config-card__grid">
+          <label class="config-field">
+            <span>Categoría</span>
+            <select
+              [ngModel]="config().categoryColumn"
+              (ngModelChange)="onCategoryChange($event)"
+              aria-label="Categoría"
+            >
+              @for (col of categoryColumns(); track col.name) {
+                <option [value]="col.name">{{ col.name }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="config-field">
+            <span>Valor</span>
+            <select
+              [ngModel]="config().valueColumn ?? ''"
+              (ngModelChange)="onValueChange($event)"
+              aria-label="Valor"
+            >
+              <option value="">Contar filas</option>
+              @for (col of valueColumns(); track col.name) {
+                <option [value]="col.name">{{ col.name }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="config-field">
+            <span>Agregación</span>
+            <select
+              [ngModel]="config().aggregation"
+              (ngModelChange)="onAggregationChange($event)"
+              [disabled]="!config().valueColumn"
+              aria-label="Agregación"
+            >
+              <option value="sum">Suma</option>
+              <option value="avg">Promedio</option>
+              <option value="count">Conteo</option>
+            </select>
+          </label>
+
+          <label class="config-field">
+            <span>Categorías <strong>{{ config().topN }}</strong></span>
+            <input
+              type="range"
+              min="3"
+              max="30"
+              [ngModel]="config().topN"
+              (ngModelChange)="onTopNChange($event)"
+              aria-label="Máximo de categorías"
+            />
+          </label>
+
+          <label class="config-field">
+            <span>Título</span>
+            <input
+              type="text"
+              [ngModel]="config().title"
+              (ngModelChange)="onTitleChange($event)"
+              placeholder="Opcional"
+              aria-label="Título"
+            />
+          </label>
+        </div>
+      </section>
+
+      <section class="charts-grid page-body-stack__section page-body-stack__section--grow" aria-label="Gráficos">
+        @if (!hasAnyChart()) {
+          <p class="charts-no-chart">Seleccione una columna de categoría válida.</p>
+        } @else {
+          @for (panel of chartPanels(); track panel.kind) {
+            <article class="chart-panel">
+              <header class="chart-panel__header">
+                <i class="bi {{ panel.icon }}" aria-hidden="true"></i>
+                <h3>{{ panel.label }}</h3>
+              </header>
+              <div class="chart-panel__body">
+                @if (panel.options) {
+                  @defer (on viewport) {
+                    <app-apex-chart [options]="panel.options" />
+                  } @placeholder {
+                    <p class="chart-panel__empty">Cargando gráfico…</p>
+                  }
+                } @else {
+                  <p class="chart-panel__empty">Sin datos</p>
+                }
+              </div>
+            </article>
+          }
+        }
+      </section>
+    </div>
+  }
+</app-page-shell>

@@ -1,0 +1,155 @@
+/* Botones RGFM: estilos completos (no dependen solo de variables Bootstrap diferidas). */
+
+@mixin rgfm-btn-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  font-family: inherit;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid transparent;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+
+  &:focus-visible {
+    outline: 2px solid #6eb5ff;
+    outline-offset: 2px;
+  }
+
+  &:disabled,
+  &[disabled] {
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  i[class*='bi-'] {
+    display: inline-block;
+    width: 1rem;
+    min-width: 1rem;
+    flex-shrink: 0;
+    text-align: center;
+    vertical-align: -0.125em;
+  }
+}
+
+.btn.btn-rgfm-primary {
+  @include rgfm-btn-base;
+
+  --bs-btn-bg: #1a3a5a;
+  --bs-btn-border-color: #1a3a5a;
+  --bs-btn-color: #fff;
+  --bs-btn-hover-bg: #2a5080;
+  --bs-btn-hover-border-color: #2a5080;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-disabled-bg: #8fa3b8;
+  --bs-btn-disabled-border-color: #8fa3b8;
+
+  background-color: #1a3a5a;
+  border-color: #1a3a5a;
+  color: #fff;
+  border-radius: 9px;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.9rem;
+  min-height: 38px;
+  min-width: 2.5rem;
+  box-shadow: 0 3px 10px rgb(26 58 90 / 28%);
+
+  &.btn-sm {
+    padding: 0.4rem 0.95rem;
+    font-size: 0.875rem;
+    min-height: 34px;
+  }
+
+  &:hover:not(:disabled):not([disabled]) {
+    background-color: #2a5080;
+    border-color: #2a5080;
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgb(26 58 90 / 38%);
+  }
+
+  &:active:not(:disabled):not([disabled]) {
+    transform: translateY(0);
+    background-color: #102a43;
+    border-color: #102a43;
+  }
+
+  &:disabled,
+  &[disabled] {
+    background-color: #8fa3b8;
+    border-color: #8fa3b8;
+    color: #fff;
+    box-shadow: none;
+    transform: none;
+  }
+
+  &.btn-column-panel-active {
+    background-color: #2a5080;
+    border-color: #2a5080;
+    color: #fff;
+    box-shadow: 0 5px 14px rgb(26 58 90 / 38%);
+  }
+}
+
+.btn.btn-rgfm-page {
+  @include rgfm-btn-base;
+
+  --bs-btn-color: #1a3a5a;
+  --bs-btn-border-color: #a8b8c8;
+  --bs-btn-bg: #fff;
+  --bs-btn-hover-bg: #1a3a5a;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-border-color: #1a3a5a;
+
+  background-color: #fff;
+  border-color: #a8b8c8;
+  color: #1a3a5a;
+  border-radius: 9px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.875rem;
+  min-width: 40px;
+  min-height: 36px;
+
+  &.btn-sm {
+    padding: 0.3rem 0.65rem;
+    font-size: 0.8125rem;
+    min-height: 32px;
+  }
+
+  &:hover:not(:disabled):not([disabled]) {
+    background-color: #1a3a5a;
+    border-color: #1a3a5a;
+    color: #fff;
+  }
+
+  &:disabled,
+  &[disabled] {
+    background-color: #f1f5f9;
+    border-color: #d1dbe6;
+    color: #94a3b8;
+  }
+}
+
+.filters-group,
+.buttons-group,
+.summary-pagination__controls,
+.block-pagination .pagination-controls {
+  .btn i[class*='bi-'] {
+    display: inline-block;
+    width: 1rem;
+    min-width: 1rem;
+    text-align: center;
+    vertical-align: -0.125em;
+  }
+}

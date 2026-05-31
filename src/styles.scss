@@ -1,0 +1,119 @@
+@use './app/shared/styles/page-shell';
+@use './app/shared/styles/data-table';
+@use './app/shared/styles/rgfm-buttons';
+
+:root {
+  --app-bg: #eef2f7;
+  --sidebar-bg: #1a3a5a;
+  --primary: #1a3a5a;
+  --primary-light: #2a5080;
+  --accent: #6eb5ff;
+  --card-shadow: 0 8px 24px rgba(16, 42, 67, 0.08);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Bootstrap overrides */
+.btn-primary {
+  --bs-btn-bg: #1a3a5a;
+  --bs-btn-border-color: #1a3a5a;
+  --bs-btn-hover-bg: #2a5080;
+  --bs-btn-hover-border-color: #2a5080;
+  --bs-btn-active-bg: #102a43;
+  --bs-btn-active-border-color: #102a43;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2rem rgba(110, 181, 255, 0.25);
+}
+
+/* Animaciones ligeras (reemplazo de animate.css) */
+@media (prefers-reduced-motion: no-preference) {
+  .rgfm-fade-in-down {
+    animation: rgfm-fade-in-down 0.45s ease-out both;
+  }
+
+  .rgfm-fade-in-up {
+    animation: rgfm-fade-in-up 0.45s ease-out both;
+  }
+}
+
+@keyframes rgfm-fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rgfm-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 2000;
+}
+
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+  width: auto;
+  height: auto;
+  padding: 0.5rem 1rem;
+  background: #1a3a5a;
+  color: #fff;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+/* Toasts Tailgrids (login, dashboard, etc.) */
+.tg-alert-stack {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1080;
+  width: min(360px, calc(100vw - 2rem));
+  pointer-events: none;
+
+  app-tailgrids-alert {
+    display: block;
+    pointer-events: auto;
+    animation: tg-alert-in 0.28s ease-out;
+  }
+}
+
+@keyframes tg-alert-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

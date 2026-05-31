@@ -1,0 +1,220 @@
+<app-page-shell title="Reportes">
+  @if (showLoader()) {
+    <app-loader [overlay]="true" [message]="loaderMessage()" color="#FFAA49" [size]="48" />
+  }
+
+  @if (toast.state(); as t) {
+    <div class="tg-alert-stack" aria-live="polite">
+      <app-tailgrids-alert
+        [variant]="t.variant"
+        [title]="t.title"
+        [message]="t.message"
+        (closed)="toast.dismiss()"
+      />
+    </div>
+  }
+
+  <section class="block-main page-body-fill rgfm-fade-in-up">
+    <input
+      #fileInput
+      type="file"
+      accept=".xlsx,.xls"
+      class="hidden-input"
+      aria-label="Seleccionar archivo Excel para importar"
+      (change)="onFileSelected($event)"
+    />
+
+    <!-- Sub-bloque: filtros (izq) + acciones (der) en una fila -->
+    <div class="block-actions-row">
+      <div class="filters-group">
+        <label for="filter-mes">
+          <span class="filter-label">Mes</span>
+          <select id="filter-mes" class="form-select form-select-sm" [(ngModel)]="filterMes">
+            <option value="">Todos</option>
+            @for (mes of meses(); track mes) {
+              <option [value]="mes">{{ mes }}</option>
+            }
+          </select>
+        </label>
+        <label for="filter-vendedor">
+          <span class="filter-label">Vendedor</span>
+          <select id="filter-vendedor" class="form-select form-select-sm" [(ngModel)]="filterVendedor">
+            <option value="">Todos</option>
+            @for (v of vendedores(); track v) {
+              <option [value]="v">{{ v }}</option>
+            }
+          </select>
+        </label>
+        <button type="button" class="btn btn-rgfm-primary btn-sm" (click)="applyFilters()">
+          <i class="bi bi-funnel me-1"></i>Filtrar
+        </button>
+        <button type="button" class="btn btn-rgfm-primary btn-sm" (click)="clearFilters()">
+          Limpiar
+        </button>
+      </div>
+
+      <div class="buttons-group">
+        <button type="button" class="btn btn-rgfm-primary btn-sm" (click)="openImportDialog()" [disabled]="importing()">
+          <i class="bi bi-upload me-1"></i>
+          Importar
+        </button>
+        <button
+          type="button"
+          class="btn btn-rgfm-primary btn-sm"
+          (click)="saveToDatabase()"
+          [disabled]="!canSaveToDatabase()"
+          title="Reemplaza todos los registros en BD por esta importación"
+        >
+          <i class="bi bi-database-add me-1"></i>
+          Guardar en BD
+        </button>
+        <button
+          type="button"
+          class="btn btn-rgfm-primary btn-sm"
+          (click)="exportExcel()"
+          [disabled]="exporting() || effectiveTotal() === 0 || displayColumns().length === 0"
+        >
+          <i class="bi bi-download me-1"></i>
+          Exportar
+        </button>
+        <button
+          type="button"
+          class="btn btn-rgfm-primary btn-sm"
+          [class.btn-column-panel-active]="showColumnPanel()"
+          [attr.aria-expanded]="showColumnPanel()"
+          (click)="toggleColumnPanel()"
+        >
+          <i class="bi bi-layout-three-columns me-1"></i>
+          Asignar columnas
+        </button>
+      </div>
+    </div>
+
+    @if (showColumnPanel()) {
+      <div class="block-columns-panel">
+        <div class="panel-header">
+          <h2>Asignar columnas</h2>
+          <div class="panel-actions">
+            <button type="button" class="btn btn-link" (click)="showAllColumns()">Todas</button>
+            <button type="button" class="btn btn-link" (click)="hideAllColumns()">Ninguna</button>
+          </div>
+        </div>
+        <div class="columns-grid">
+          @for (header of columnOrder(); track header) {
+            <label class="column-chip" [class.column-hidden]="!isColumnVisible(header)">
+              <input
+                type="checkbox"
+                [checked]="isColumnVisible(header)"
+                (change)="toggleColumnVisibility(header, $any($event.target).checked)"
+              />
+              <span class="column-chip__label">{{ header }}</span>
+            </label>
+          }
+        </div>
+        <p class="columns-panel-footer">
+          {{ displayColumns().length }} de {{ columnOrder().length }} columnas visibles
+        </p>
+      </div>
+    }
+
+    <!-- Sub-bloque: tabla -->
+    <div class="block-table">
+      @if (displayColumns().length === 0 && !loading()) {
+        <p class="hint center">Marque columnas en <strong>Asignar columnas</strong>.</p>
+      } @else {
+        <div class="table-wrapper">
+          <table class="table table-sm table-hover mb-0" aria-label="Datos de reportes">
+            <thead>
+              <tr>
+                <th class="sticky-col" scope="col">#</th>
+                @for (header of displayColumns(); track header) {
+                  <th
+                    scope="col"
+                    class="draggable-th"
+                    [class.column-dragging]="isColumnDragging(header)"
+                    [class.column-drag-over]="isColumnDragTarget(header)"
+                    draggable="true"
+                    (dragstart)="onColumnDragStart(header, $event)"
+                    (dragover)="onColumnDragOver(header, $event)"
+                    (dragleave)="onColumnDragLeave()"
+                    (drop)="onColumnDrop(header, $event)"
+                    (dragend)="onColumnDragEnd()"
+                  >
+                    <i class="bi bi-grip-vertical drag-handle" aria-hidden="true"></i>
+                    {{ header }}
+                  </th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @if (effectiveTotal() === 0) {
+                <tr>
+                  <td [attr.colspan]="displayColumns().length + 1" class="empty-row">
+                    No hay datos. Use <strong>Importar</strong> para cargar un Excel.
+                  </td>
+                </tr>
+              } @else {
+                @for (row of pageRows(); track trackRow(row, $index); let i = $index) {
+                  <tr>
+                    <td class="sticky-col">{{ rowNumber(i) }}</td>
+                    @for (header of displayColumns(); track header) {
+                      <td>{{ cellValue(row, header) }}</td>
+                    }
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <!-- Sub-bloque: resumen de filas (izq) + paginador (der) -->
+    @if (effectiveTotal() > 0 && displayColumns().length > 0) {
+      <div class="block-pagination">
+        <div class="pagination-summary">
+          <span class="pagination-summary__count">{{ paginationRowsLabel().count }}</span>
+          <span class="pagination-summary__detail">{{ paginationRowsLabel().detail }}</span>
+        </div>
+
+        <div class="pagination-controls">
+          <button
+            type="button"
+            class="btn btn-rgfm-page btn-sm"
+            (click)="changePage(0)"
+            [disabled]="page() === 0"
+            aria-label="Primera página"
+          >
+            «
+          </button>
+          <button
+            type="button"
+            class="btn btn-rgfm-page btn-sm"
+            (click)="changePage(page() - 1)"
+            [disabled]="page() === 0"
+          >
+            Anterior
+          </button>
+          <span class="page-indicator">Página {{ page() + 1 }} / {{ effectiveTotalPages() }}</span>
+          <button
+            type="button"
+            class="btn btn-rgfm-page btn-sm"
+            (click)="changePage(page() + 1)"
+            [disabled]="page() >= effectiveTotalPages() - 1"
+          >
+            Siguiente
+          </button>
+          <button
+            type="button"
+            class="btn btn-rgfm-page btn-sm"
+            (click)="changePage(effectiveTotalPages() - 1)"
+            [disabled]="page() >= effectiveTotalPages() - 1"
+            aria-label="Última página"
+          >
+            »
+          </button>
+        </div>
+      </div>
+    }
+  </section>
+</app-page-shell>

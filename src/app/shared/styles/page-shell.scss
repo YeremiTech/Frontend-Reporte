@@ -1,0 +1,90 @@
+/** Altura fija del bloque título (igual en Reportes, Resumen, Gráficos). */
+:root {
+  --page-title-height: 68px;
+  --page-block-gap: 0.6rem;
+  --page-body-padding-x: 0.35rem;
+  --page-body-padding-bottom: 0.5rem;
+  --empty-state-panel-min-height: 17.5rem;
+}
+
+.page-shell-host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  gap: var(--page-block-gap);
+}
+
+.page-block--title {
+  flex: 0 0 var(--page-title-height);
+  height: var(--page-title-height);
+  min-height: var(--page-title-height);
+  max-height: var(--page-title-height);
+  overflow: hidden;
+  padding: 0 var(--page-body-padding-x);
+  box-sizing: border-box;
+
+  app-page-title {
+    display: block;
+    height: 100%;
+  }
+}
+
+.page-block--body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 var(--page-body-padding-x) var(--page-body-padding-bottom);
+  gap: var(--page-block-gap);
+}
+
+/** Hijo directo que debe llenar el bloque cuerpo (tabla, empty state, reportes). */
+.page-block--body > .page-body-fill,
+.page-block--body > .data-panel,
+.page-block--body > .block-main,
+.page-block--body > app-empty-state {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  align-self: stretch;
+}
+
+.page-block--body > app-empty-state {
+  display: flex;
+}
+
+/** Varios sub-bloques dentro del cuerpo (p. ej. Gráficos: config + grid). */
+.page-body-stack {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--page-block-gap);
+  overflow: hidden;
+}
+
+.page-body-stack__section {
+  min-width: 0;
+
+  &--grow {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  &--fixed {
+    flex: 0 0 auto;
+  }
+}

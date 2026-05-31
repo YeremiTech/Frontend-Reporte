@@ -1,0 +1,31 @@
+<div
+  class="tg-alert"
+  [class.tg-alert--success]="variant() === 'success'"
+  [class.tg-alert--danger]="variant() === 'danger'"
+  [class.tg-alert--warning]="variant() === 'warning'"
+  [class.tg-alert--info]="variant() === 'info'"
+  [class.tg-alert--gray]="variant() === 'gray'"
+  role="alert"
+  aria-live="assertive"
+  aria-atomic="true"
+>
+  <span class="tg-alert__icon" aria-hidden="true">
+    <i class="bi" [class]="iconClass()"></i>
+  </span>
+
+  <div class="tg-alert__content">
+    <p class="tg-alert__title">{{ title() }}</p>
+    <p class="tg-alert__message">{{ message() }}</p>
+  </div>
+
+  @if (dismissible()) {
+    <button
+      type="button"
+      class="tg-alert__close"
+      aria-label="Cerrar alerta"
+      (click)="onClose()"
+    >
+      <i class="bi bi-x-lg" aria-hidden="true"></i>
+    </button>
+  }
+</div>
