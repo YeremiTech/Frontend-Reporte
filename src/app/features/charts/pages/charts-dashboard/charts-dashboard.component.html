@@ -1,12 +1,5 @@
 <app-page-shell title="Gráficos">
-  @if (loading()) {
-    <app-loader
-      [overlay]="true"
-      message="Cargando datos desde la base de datos..."
-      color="#FFAA49"
-      [size]="48"
-    />
-  } @else if (!hasData()) {
+  @if (!hasData()) {
     <app-empty-state
       [iconType]="emptyPreset.iconType"
       [title]="emptyPreset.title"

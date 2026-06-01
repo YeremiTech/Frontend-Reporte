@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
-import { resolveApiError, validateLoginForm } from '../../../../core/utils/api-error.resolver';
+import { validateLoginForm } from '../../../../core/utils/api-error.resolver';
 import { LoaderComponent } from '../../../../shared/components/loader/loader.component';
 import { TailgridsAlertComponent } from '../../../../shared/components/tailgrids-alert/tailgrids-alert.component';
 

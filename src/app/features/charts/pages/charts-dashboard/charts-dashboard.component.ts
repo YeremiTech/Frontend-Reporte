@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, afterNextRender, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type {
   ChartAggregation,
@@ -11,7 +11,6 @@ import { ReportDataStoreService } from '../../../../core/services/report-data-st
 import { ApexChartComponent } from '../../../../shared/components/apex-chart/apex-chart.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { EMPTY_STATE_PRESETS } from '../../../../shared/components/empty-state/empty-state.presets';
-import { LoaderComponent } from '../../../../shared/components/loader/loader.component';
 import { PageShellComponent } from '../../../../shared/components/page-shell/page-shell.component';
 
 const CHART_PANELS: { kind: ChartKind; label: string; icon: string }[] = [
@@ -38,7 +37,7 @@ interface ChartPanelView {
 @Component({
   selector: 'app-charts-dashboard',
   standalone: true,
-  imports: [FormsModule, ApexChartComponent, PageShellComponent, EmptyStateComponent, LoaderComponent],
+  imports: [FormsModule, ApexChartComponent, PageShellComponent, EmptyStateComponent],
   templateUrl: './charts-dashboard.component.html',
   styleUrl: './charts-dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,7 +48,6 @@ export class ChartsDashboardComponent {
   private readonly dataStore = inject(ReportDataStoreService);
   private readonly analytics = inject(ChartAnalyticsService);
 
-  readonly loading = this.dataStore.loading;
   readonly hasData = this.dataStore.hasData;
   readonly topNDraft = signal(12);
   private topNDebounceId: ReturnType<typeof setTimeout> | null = null;
@@ -84,6 +82,8 @@ export class ChartsDashboardComponent {
   private readonly expandedPanels = signal<ReadonlySet<ChartKind>>(new Set<ChartKind>(['bar']));
 
   readonly fullscreenPanel = signal<ChartKind | null>(null);
+
+  private lastColumnSignature = '';
 
   readonly hasAnyChart = computed(() => {
     const snap = this.dataStore.snapshot();
@@ -137,30 +137,54 @@ export class ChartsDashboardComponent {
   }
 
   constructor() {
-    afterNextRender(() => {
-      void this.dataStore.refreshFromDatabase();
-    });
-
     effect(() => {
       this.topNDraft.set(this.config().topN);
     });
 
     effect(() => {
-      const meta = this.columnMeta();
-      if (!meta.length) {
+      const snap = this.dataStore.snapshot();
+      const categories = this.categoryColumns();
+      const values = this.valueColumns();
+
+      if (!snap || !categories.length) {
+        if (!snap) {
+          this.lastColumnSignature = '';
+        }
         return;
       }
+
+      const signature = snap.columns.join('\u0001');
+      const isNewDataset = signature !== this.lastColumnSignature;
+
+      if (isNewDataset) {
+        this.lastColumnSignature = signature;
+        const firstCategory = categories[0].name;
+        const firstValue = values[0]?.name;
+        this.config.set({
+          categoryColumn: firstCategory,
+          valueColumn: firstValue,
+          aggregation: firstValue ? 'sum' : 'count',
+          title: '',
+          topN: 12,
+        });
+        return;
+      }
+
       const current = this.config();
-      if (current.categoryColumn && meta.some((m) => m.name === current.categoryColumn)) {
+      const categoryValid = categories.some((column) => column.name === current.categoryColumn);
+      const valueValid =
+        !current.valueColumn || values.some((column) => column.name === current.valueColumn);
+
+      if (categoryValid && valueValid) {
         return;
       }
-      const suggested = this.analytics.suggestConfig(meta);
+
+      const firstValue = values[0]?.name;
       this.config.set({
-        categoryColumn: suggested.categoryColumn ?? meta[0].name,
-        valueColumn: suggested.valueColumn,
-        aggregation: suggested.aggregation ?? 'sum',
-        title: '',
-        topN: suggested.topN ?? 12,
+        ...current,
+        categoryColumn: categoryValid ? current.categoryColumn : categories[0].name,
+        valueColumn: valueValid ? current.valueColumn : firstValue,
+        aggregation: valueValid && current.valueColumn ? current.aggregation : firstValue ? 'sum' : 'count',
       });
     });
   }

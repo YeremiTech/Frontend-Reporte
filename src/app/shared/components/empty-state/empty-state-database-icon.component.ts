@@ -2,7 +2,7 @@ import { Component, input } from '@angular/core';
 
 let databaseIconIdSeq = 0;
 
-/** Icono base de datos (Azure-style), reutilizable con tono gris desaturado. */
+/** Icono de estado vacío (estilo Azure), reutilizable con tono gris desaturado. */
 @Component({
   selector: 'app-empty-state-database-icon',
   standalone: true,

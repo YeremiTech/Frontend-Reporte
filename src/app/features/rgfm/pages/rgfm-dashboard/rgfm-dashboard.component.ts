@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import {
   afterNextRender,
   ChangeDetectionStrategy,
@@ -10,10 +9,9 @@ import {
   ElementRef,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { catchError, forkJoin, from, of, switchMap, throwError } from 'rxjs';
 import { ApiErrorCode } from '../../../../core/constants';
-import { parseHttpErrorFromBlob, RgfmApiService } from '../../../../core/services/rgfm-api.service';
-import { resolvedError, resolveApiError } from '../../../../core/utils/api-error.resolver';
+import { ExcelImportService } from '../../../../core/services/excel-import.service';
+import { resolvedError } from '../../../../core/utils/api-error.resolver';
 import { validateImportFile } from '../../../../core/utils/validate-import-file';
 import { ReportDataStoreService } from '../../../../core/services/report-data-store.service';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -21,15 +19,10 @@ import { LoaderComponent } from '../../../../shared/components/loader/loader.com
 import { PageShellComponent } from '../../../../shared/components/page-shell/page-shell.component';
 import { TailgridsAlertComponent } from '../../../../shared/components/tailgrids-alert/tailgrids-alert.component';
 import { RgfmColumnPanelComponent } from '../../components/rgfm-column-panel/rgfm-column-panel.component';
-import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
-import { SAVE_TO_DB_CONFIRM } from '../../../../shared/components/confirm-dialog/confirm-dialog.model';
 import {
-  cellValueForRow,
-  ImportResult,
-  mergeColumnOrder,
-  RgfmRecord,
-  RgfmTableRow,
+  uniqueImportHeaders,
 } from '../../../../core/models/rgfm.model';
+import { ResolvedApiError } from '../../../../core/models/api-response.model';
 
 export interface RenderedTableRow {
   id: string | number;
@@ -46,7 +39,6 @@ export interface RenderedTableRow {
     LoaderComponent,
     PageShellComponent,
     RgfmColumnPanelComponent,
-    ConfirmDialogComponent,
   ],
   templateUrl: './rgfm-dashboard.component.html',
   styleUrl: './rgfm-dashboard.component.scss',
@@ -55,21 +47,10 @@ export interface RenderedTableRow {
 export class RgfmDashboardComponent {
   @ViewChild('fileInput') fileInputRef!: ElementRef<HTMLInputElement>;
 
-  private readonly api = inject(RgfmApiService);
+  private readonly excelImport = inject(ExcelImportService);
   private readonly reportDataStore = inject(ReportDataStoreService);
   protected readonly toast = inject(ToastService);
   readonly pageSize = 50;
-
-  readonly usingPreviewData = signal(false);
-  readonly dataPersistedInDb = signal(false);
-  previewRows = signal<Record<string, string>[]>([]);
-  private lastImportedFileName = '';
-  private lastImportedHeaders: string[] = [];
-
-  records = signal<RgfmRecord[]>([]);
-  total = signal(0);
-  page = signal(0);
-  totalPages = signal(0);
 
   columnOrder = signal<string[]>([]);
   hiddenColumns = signal<Set<string>>(new Set());
@@ -80,8 +61,10 @@ export class RgfmDashboardComponent {
     this.columnOrder().filter((header) => !this.hiddenColumns().has(header))
   );
 
-  readonly filteredPreviewRows = computed(() => {
-    let rows = this.previewRows();
+  readonly importedRows = computed(() => this.reportDataStore.snapshot()?.rows ?? []);
+
+  readonly filteredRows = computed(() => {
+    let rows = this.importedRows();
     const mes = this.filterMes();
     const vendedor = this.filterVendedor();
     if (mes) {
@@ -93,17 +76,14 @@ export class RgfmDashboardComponent {
     return rows;
   });
 
-  readonly previewTotalPages = computed(() => {
-    const count = this.filteredPreviewRows().length;
+  readonly totalPages = computed(() => {
+    const count = this.filteredRows().length;
     return count === 0 ? 0 : Math.ceil(count / this.pageSize);
   });
 
-  readonly pageRows = computed((): RgfmTableRow[] => {
-    if (this.usingPreviewData()) {
-      const start = this.page() * this.pageSize;
-      return this.filteredPreviewRows().slice(start, start + this.pageSize);
-    }
-    return this.records();
+  readonly pageRows = computed((): Record<string, string>[] => {
+    const start = this.page() * this.pageSize;
+    return this.filteredRows().slice(start, start + this.pageSize);
   });
 
   readonly renderedRows = computed((): RenderedTableRow[] => {
@@ -113,26 +93,17 @@ export class RgfmDashboardComponent {
     return rows.map((row, index) => ({
       id: this.trackRow(row, index),
       index: page * this.pageSize + index + 1,
-      cells: cols.map((header) => cellValueForRow(row, header)),
+      cells: cols.map((header) => row[header] ?? ''),
     }));
   });
 
-  readonly effectiveTotal = computed(() =>
-    this.usingPreviewData() ? this.filteredPreviewRows().length : this.total()
-  );
-
-  readonly effectiveTotalPages = computed(() =>
-    this.usingPreviewData() ? this.previewTotalPages() : this.totalPages()
-  );
+  readonly effectiveTotal = computed(() => this.filteredRows().length);
 
   readonly hasActiveFilters = computed(() => !!this.filterMes() || !!this.filterVendedor());
 
   readonly paginationRowsLabel = computed(() => {
     const visible = this.effectiveTotal();
-    if (!this.usingPreviewData()) {
-      return { count: visible, detail: 'filas en total' };
-    }
-    const imported = this.previewRows().length;
+    const imported = this.importedRows().length;
     if (this.hasActiveFilters() && visible !== imported) {
       return { count: visible, detail: `de ${imported} filas importadas (filtro activo)` };
     }
@@ -146,125 +117,66 @@ export class RgfmDashboardComponent {
   readonly filterVendedor = signal('');
 
   showColumnPanel = signal(false);
-  saveConfirmOpen = signal(false);
 
-  readonly saveToDbConfirm = SAVE_TO_DB_CONFIRM;
-
-  loading = signal(false);
   importing = signal(false);
   exporting = signal(false);
-  saving = signal(false);
 
-  readonly canSaveToDatabase = computed(
-    () => this.usingPreviewData() && this.previewRows().length > 0 && !this.saving()
-  );
-
-  readonly showLoader = computed(
-    () => this.loading() || this.importing() || this.exporting() || this.saving()
-  );
+  readonly showLoader = computed(() => this.importing() || this.exporting());
 
   readonly loaderMessage = computed(() => {
-    if (this.saving()) {
-      return 'Guardando en BD...';
-    }
     if (this.importing()) {
       return 'Importando...';
     }
     if (this.exporting()) {
       return 'Exportando...';
     }
-    if (this.loading()) {
-      return 'Cargando...';
-    }
     return 'Cargando...';
   });
+
+  page = signal(0);
 
   draggedColumnHeader: string | null = null;
   dragOverColumnHeader: string | null = null;
 
   constructor() {
-    afterNextRender(() => this.scheduleBackgroundLoads());
+    afterNextRender(() => this.initializeView());
   }
 
-  private scheduleBackgroundLoads(): void {
-    const run = () => this.loadInitialData();
+  private initializeView(): void {
+    if (this.reportDataStore.hasData()) {
+      this.restoreLayoutFromStore();
+      this.refreshFilterOptions();
+      return;
+    }
+    this.initializeColumnLayout();
+  }
 
-    if (typeof requestIdleCallback === 'function') {
-      requestIdleCallback(run, { timeout: 2500 });
-    } else {
-      setTimeout(run, 100);
+  private initializeColumnLayout(): void {
+    this.applyColumnLayout([], new Set(), true);
+  }
+
+  private restoreLayoutFromStore(): void {
+    const { order, hiddenColumns } = this.reportDataStore.getColumnLayout();
+    const hidden = new Set(hiddenColumns);
+    this.applyColumnLayout(order, hidden, true);
+  }
+
+  private applyColumnLayout(order: string[], hidden: Set<string>, persist: boolean): void {
+    this.columnOrder.set(order);
+    this.hiddenColumns.set(hidden);
+    this.setBaselineColumnLayout(order, hidden);
+    if (persist) {
+      this.persistColumnLayout();
     }
   }
 
-  private loadInitialData(): void {
-    forkJoin({
-      headers: this.api.getHeaders(),
-      filters: this.api.getFilters(),
-      probe: this.api.listRecords({ page: 0, size: 1 }),
-    }).subscribe({
-      next: ({ headers, filters, probe }) => {
-        const order = [...(headers.expectedHeaders ?? [])];
-        const hidden = new Set<string>();
-        this.columnOrder.set(order);
-        this.hiddenColumns.set(hidden);
-        this.setBaselineColumnLayout(order, hidden);
-        this.meses.set(filters.meses ?? []);
-        this.vendedores.set(filters.vendedores ?? []);
-        if ((probe.total ?? 0) > 0) {
-          this.dataPersistedInDb.set(true);
-          this.loadRecords();
-        }
-      },
-      error: (err) => this.toast.showError(err),
-    });
-  }
-
-  private loadFilterOptions(): void {
-    this.api.getFilters().subscribe({
-      next: (response) => {
-        this.meses.set(response.meses ?? []);
-        this.vendedores.set(response.vendedores ?? []);
-      },
-      error: (err) => this.toast.showError(err),
-    });
-  }
-
-  loadRecords(): void {
-    this.loading.set(true);
-    this.toast.dismiss();
-
-    this.api
-      .listRecords({
-        page: this.page(),
-        size: this.pageSize,
-        mes: this.filterMes() || undefined,
-        vendedor: this.filterVendedor() || undefined,
-      })
-      .subscribe({
-        next: (response) => {
-          this.usingPreviewData.set(false);
-          this.previewRows.set([]);
-          this.records.set(response.data ?? []);
-          this.total.set(response.total ?? 0);
-          this.page.set(response.page ?? 0);
-          this.totalPages.set(response.totalPages ?? 0);
-          this.dataPersistedInDb.set((response.total ?? 0) > 0);
-          this.loading.set(false);
-        },
-        error: (err) => {
-          this.toast.showError(err);
-          this.loading.set(false);
-        },
-      });
+  private persistColumnLayout(): void {
+    this.reportDataStore.setColumnLayout(this.columnOrder(), this.hiddenColumns());
   }
 
   applyFilters(): void {
     this.page.set(0);
-    if (this.usingPreviewData()) {
-      this.refreshPreviewFilters();
-      return;
-    }
-    this.loadRecords();
+    this.refreshFilterOptions();
   }
 
   clearFilters(): void {
@@ -272,44 +184,33 @@ export class RgfmDashboardComponent {
     this.filterVendedor.set('');
     this.page.set(0);
     this.restoreBaselineColumnLayout();
-    if (this.usingPreviewData()) {
-      this.refreshPreviewFilters();
-      return;
-    }
-    this.loadRecords();
+    this.refreshFilterOptions();
   }
 
-  private refreshPreviewFilters(): void {
-    const rows = this.previewRows();
+  private refreshFilterOptions(): void {
+    const rows = this.importedRows();
     this.meses.set(this.distinctColumnValues(rows, 'MES'));
     this.vendedores.set(this.distinctColumnValues(rows, 'c_vendedor'));
   }
 
   changePage(newPage: number): void {
-    const maxPage = this.effectiveTotalPages();
+    const maxPage = this.totalPages();
     if (newPage < 0 || newPage >= maxPage) {
       return;
     }
     this.page.set(newPage);
-    if (!this.usingPreviewData()) {
-      this.loadRecords();
-    }
   }
 
   onColumnVisibilityChange(event: { header: string; visible: boolean }): void {
     this.toggleColumnVisibility(event.header, event.visible);
   }
 
-  trackRow(row: RgfmTableRow, index: number): string | number {
-    if ('id' in row && row.id != null) {
-      return row.id;
-    }
-    const map = row as Record<string, string>;
-    const key = map['LLAVE'] ?? map['n_id_doc'];
+  trackRow(row: Record<string, string>, index: number): string | number {
+    const key = row['LLAVE'] ?? row['n_id_doc'];
     if (key) {
       return key;
     }
-    return `${map['MES'] ?? ''}|${map['c_ruc'] ?? ''}|${map['c_vendedor'] ?? ''}|${index}`;
+    return `${row['MES'] ?? ''}|${row['c_ruc'] ?? ''}|${row['c_vendedor'] ?? ''}|${index}`;
   }
 
   toggleColumnPanel(): void {
@@ -320,70 +221,7 @@ export class RgfmDashboardComponent {
     this.fileInputRef?.nativeElement.click();
   }
 
-  saveToDatabase(): void {
-    const rows = this.previewRows();
-    if (!this.usingPreviewData() || rows.length === 0) {
-      this.toast.showError(
-        resolvedError(ApiErrorCode.VALIDATION_ERROR, 'Importe un Excel antes de guardar en la base de datos.')
-      );
-      return;
-    }
-
-    this.saveConfirmOpen.set(true);
-  }
-
-  onSaveConfirmDialogConfirmed(): void {
-    this.saveConfirmOpen.set(false);
-    this.executeSaveToDatabase();
-  }
-
-  onSaveConfirmDialogCancelled(): void {
-    this.saveConfirmOpen.set(false);
-  }
-
-  private executeSaveToDatabase(): void {
-    const rows = this.previewRows();
-
-    this.saving.set(true);
-    this.toast.dismiss();
-
-    this.api
-      .saveImport({
-        rows,
-        sourceFileName: this.lastImportedFileName || undefined,
-        headersFound: this.lastImportedHeaders,
-      })
-      .subscribe({
-        next: (result) => {
-          this.usingPreviewData.set(false);
-          this.dataPersistedInDb.set(true);
-          this.previewRows.set([]);
-          this.page.set(0);
-          this.filterMes.set('');
-          this.filterVendedor.set('');
-          if (result.headersPersisted?.length) {
-            this.applyPersistedColumnLayout(result.headersPersisted, this.lastImportedHeaders);
-          } else {
-            this.refreshColumnLayoutFromApi();
-          }
-          this.lastImportedHeaders = [];
-          this.loadFilterOptions();
-          this.loadRecords();
-          void this.reportDataStore.refreshFromDatabase({ force: true });
-          this.toast.showSuccess(
-            'Guardado en BD',
-            result.message || `${result.rowsSaved} filas guardadas.`
-          );
-          this.saving.set(false);
-        },
-        error: (err) => {
-          this.toast.showError(err);
-          this.saving.set(false);
-        },
-      });
-  }
-
-  onFileSelected(event: Event): void {
+  async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     const validationError = validateImportFile(file);
@@ -396,65 +234,42 @@ export class RgfmDashboardComponent {
     this.importing.set(true);
     this.toast.dismiss();
 
-    this.api.importExcel(file!).subscribe({
-      next: (result) => {
-        this.applyImportedColumnLayout(result);
-        this.lastImportedHeaders = [...(result.headersFound ?? [])];
-        this.usingPreviewData.set(true);
-        this.dataPersistedInDb.set(false);
-        this.reportDataStore.clear();
-        this.filterMes.set('');
-        this.filterVendedor.set('');
-        this.previewRows.set(result.rows ?? []);
-        this.lastImportedFileName = file!.name;
-        this.page.set(0);
-        this.refreshPreviewFilters();
-        this.toast.showSuccess(
-          'Excel cargado',
-          `${result.rowsImported} filas · ${result.headersFound.length} columnas. Use «Guardar en BD» para persistir.`
-        );
-        this.importing.set(false);
-        input.value = '';
-      },
-      error: (err) => {
-        this.toast.showError(err);
-        this.importing.set(false);
-        input.value = '';
-      },
-    });
+    try {
+      const result = await this.excelImport.parseFile(file!);
+      const layout = this.buildImportedColumnLayout(result.headersFound);
+
+      this.filterMes.set('');
+      this.filterVendedor.set('');
+      this.page.set(0);
+      this.applyColumnLayout(layout.order, layout.hidden, false);
+
+      this.reportDataStore.loadFromImport({
+        rows: result.rows ?? [],
+        columns: layout.order,
+        sourceFileName: file!.name,
+        columnOrder: layout.order,
+        hiddenColumns: [...layout.hidden],
+      });
+
+      this.refreshFilterOptions();
+
+      this.toast.showSuccess(
+        'Excel cargado',
+        `${result.rowsImported} filas · ${result.headersFound.length} columnas. Disponible en Reportes, Gráficos y Resumen.`
+      );
+    } catch (err) {
+      this.toast.showError(err as ResolvedApiError);
+    } finally {
+      this.importing.set(false);
+      input.value = '';
+    }
   }
 
-  private applyImportedColumnLayout(result: ImportResult): void {
-    const standard = this.columnOrder().length ? this.columnOrder() : result.headersFound;
-    const order = mergeColumnOrder(result.headersFound, standard);
-    const foundSet = new Set(result.headersFound);
-    const hidden = new Set(order.filter((header) => !foundSet.has(header)));
-
-    this.columnOrder.set(order);
-    this.hiddenColumns.set(hidden);
-    this.setBaselineColumnLayout(order, hidden);
-  }
-
-  private applyPersistedColumnLayout(persistedHeaders: string[], importedHeaders: string[]): void {
-    const order = [...persistedHeaders];
-    const foundSet = new Set(importedHeaders);
-    const hidden = new Set(order.filter((header) => !foundSet.has(header)));
-
-    this.columnOrder.set(order);
-    this.hiddenColumns.set(hidden);
-    this.setBaselineColumnLayout(order, hidden);
-  }
-
-  private refreshColumnLayoutFromApi(): void {
-    this.api.getHeaders().subscribe({
-      next: (headers) => {
-        const order = [...(headers.expectedHeaders ?? [])];
-        this.columnOrder.set(order);
-        this.hiddenColumns.set(new Set());
-        this.setBaselineColumnLayout(order, new Set());
-      },
-      error: (err) => this.toast.showError(err),
-    });
+  private buildImportedColumnLayout(headersFound: string[]): { order: string[]; hidden: Set<string> } {
+    return {
+      order: uniqueImportHeaders(headersFound),
+      hidden: new Set<string>(),
+    };
   }
 
   private setBaselineColumnLayout(order: string[], hidden: Set<string>): void {
@@ -465,6 +280,7 @@ export class RgfmDashboardComponent {
   private restoreBaselineColumnLayout(): void {
     this.columnOrder.set([...this.baselineColumnOrder()]);
     this.hiddenColumns.set(new Set(this.baselineHiddenColumns()));
+    this.persistColumnLayout();
   }
 
   onColumnDragStart(header: string, event: DragEvent): void {
@@ -512,6 +328,7 @@ export class RgfmDashboardComponent {
     order.splice(fromIndex, 1);
     order.splice(toIndex, 0, sourceHeader);
     this.columnOrder.set(order);
+    this.persistColumnLayout();
   }
 
   exportExcel(): void {
@@ -529,46 +346,22 @@ export class RgfmDashboardComponent {
     this.exporting.set(true);
     this.toast.dismiss();
 
-    if (this.usingPreviewData()) {
-      const rows = this.filteredPreviewRows();
-      const filename = `Reportes_export_${this.timestamp()}.xlsx`;
-      import('../../../../core/utils/excel-preview-export')
-        .then(({ exportPreviewRowsToExcel }) => exportPreviewRowsToExcel(columns, rows, filename))
-        .then(() => {
-          this.toast.showSuccess('Exportado', `${rows.length} filas · ${columns.length} columnas.`);
-        })
-        .catch(() => {
-          this.toast.showError(
-            resolvedError(ApiErrorCode.UNKNOWN_ERROR, 'No se pudo generar el archivo Excel.')
-          );
-        })
-        .finally(() => this.exporting.set(false));
-      return;
-    }
+    const rows = this.filteredRows();
+    const baseName =
+      this.reportDataStore.sourceFileName().replace(/\.(xlsx|xls)$/i, '') || 'Reportes';
+    const filename = `${baseName}_export_${this.timestamp()}.xlsx`;
 
-    const filters = {
-      mes: this.filterMes() || undefined,
-      vendedor: this.filterVendedor() || undefined,
-    };
-
-    this.api
-      .exportExcel(columns, filters)
-      .pipe(
-        catchError((err: HttpErrorResponse) =>
-          from(parseHttpErrorFromBlob(err)).pipe(switchMap((resolved) => throwError(() => resolved)))
-        )
-      )
-      .subscribe({
-        next: (blob) => {
-          this.downloadBlob(blob, `Reportes_export_${this.timestamp()}.xlsx`);
-          this.toast.showSuccess('Exportado', 'Archivo descargado.');
-          this.exporting.set(false);
-        },
-        error: (err) => {
-          this.toast.showError(err);
-          this.exporting.set(false);
-        },
-      });
+    import('../../../../core/utils/excel-preview-export')
+      .then(({ exportPreviewRowsToExcel }) => exportPreviewRowsToExcel(columns, rows, filename))
+      .then(() => {
+        this.toast.showSuccess('Exportado', `${rows.length} filas · ${columns.length} columnas.`);
+      })
+      .catch(() => {
+        this.toast.showError(
+          resolvedError(ApiErrorCode.UNKNOWN_ERROR, 'No se pudo generar el archivo Excel.')
+        );
+      })
+      .finally(() => this.exporting.set(false));
   }
 
   toggleColumnVisibility(header: string, visible: boolean): void {
@@ -579,14 +372,17 @@ export class RgfmDashboardComponent {
       hidden.add(header);
     }
     this.hiddenColumns.set(hidden);
+    this.persistColumnLayout();
   }
 
   showAllColumns(): void {
     this.hiddenColumns.set(new Set());
+    this.persistColumnLayout();
   }
 
   hideAllColumns(): void {
     this.hiddenColumns.set(new Set(this.columnOrder()));
+    this.persistColumnLayout();
   }
 
   isColumnDragTarget(header: string): boolean {
@@ -606,15 +402,6 @@ export class RgfmDashboardComponent {
       }
     }
     return [...values].sort((a, b) => a.localeCompare(b, 'es'));
-  }
-
-  private downloadBlob(blob: Blob, filename: string): void {
-    const url = window.URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = filename;
-    anchor.click();
-    window.URL.revokeObjectURL(url);
   }
 
   private timestamp(): string {

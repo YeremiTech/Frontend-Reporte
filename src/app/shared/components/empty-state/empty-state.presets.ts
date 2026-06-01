@@ -10,18 +10,16 @@ export interface EmptyStatePreset {
 
 export const EMPTY_STATE_PRESETS = {
   resumen: {
-    iconType: 'database',
+    iconType: 'bootstrap',
     title: 'Sin datos para mostrar',
-    description:
-      'Guarde la importación en la base de datos desde Reportes para ver el resumen por vendedor.',
+    description: 'Importe un archivo Excel desde Reportes para ver el resumen por vendedor.',
     buttonLabel: 'Ir a Reportes',
     actionRoute: '/',
   },
   graficos: {
-    iconType: 'database',
+    iconType: 'bootstrap',
     title: 'Sin datos para mostrar',
-    description:
-      'Guarde la importación en la base de datos desde Reportes para generar gráficos.',
+    description: 'Importe un archivo Excel desde Reportes para generar gráficos.',
     buttonLabel: 'Ir a Reportes',
     actionRoute: '/',
   },

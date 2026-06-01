@@ -14,17 +14,6 @@
     </div>
   }
 
-  <app-confirm-dialog
-    [open]="saveConfirmOpen()"
-    [variant]="saveToDbConfirm.variant ?? 'danger'"
-    [title]="saveToDbConfirm.title"
-    [message]="saveToDbConfirm.message"
-    [confirmLabel]="saveToDbConfirm.confirmLabel ?? 'Confirmar'"
-    [cancelLabel]="saveToDbConfirm.cancelLabel ?? 'Cancelar'"
-    (confirmed)="onSaveConfirmDialogConfirmed()"
-    (cancelled)="onSaveConfirmDialogCancelled()"
-  />
-
   <section class="block-main page-body-fill">
     <input
       #fileInput
@@ -35,7 +24,6 @@
       (change)="onFileSelected($event)"
     />
 
-    <!-- Sub-bloque: filtros (izq) + acciones (der) en una fila -->
     <div class="block-actions-row">
       <div class="filters-group">
         <label class="rgfm-field" for="filter-mes">
@@ -82,16 +70,6 @@
         <button
           type="button"
           class="btn btn-rgfm-primary btn-sm"
-          (click)="saveToDatabase()"
-          [disabled]="!canSaveToDatabase()"
-          title="Reemplaza todos los registros en BD por esta importación"
-        >
-          <i class="bi bi-database-add me-1"></i>
-          Guardar en BD
-        </button>
-        <button
-          type="button"
-          class="btn btn-rgfm-primary btn-sm"
           (click)="exportExcel()"
           [disabled]="exporting() || effectiveTotal() === 0 || displayColumns().length === 0"
         >
@@ -122,9 +100,8 @@
       />
     }
 
-    <!-- Sub-bloque: tabla -->
     <div class="block-table">
-      @if (displayColumns().length === 0 && !loading()) {
+      @if (displayColumns().length === 0) {
         <p class="hint center">Marque columnas en <strong>Asignar columnas</strong>.</p>
       } @else {
         <div class="table-wrapper">
@@ -174,7 +151,6 @@
       }
     </div>
 
-    <!-- Sub-bloque: resumen de filas (izq) + paginador (der) -->
     @if (effectiveTotal() > 0 && displayColumns().length > 0) {
       <div class="block-pagination">
         <div class="pagination-summary">
@@ -200,20 +176,20 @@
           >
             Anterior
           </button>
-          <span class="page-indicator">Página {{ page() + 1 }} / {{ effectiveTotalPages() }}</span>
+          <span class="page-indicator">Página {{ page() + 1 }} / {{ totalPages() }}</span>
           <button
             type="button"
             class="btn btn-rgfm-page btn-sm"
             (click)="changePage(page() + 1)"
-            [disabled]="page() >= effectiveTotalPages() - 1"
+            [disabled]="page() >= totalPages() - 1"
           >
             Siguiente
           </button>
           <button
             type="button"
             class="btn btn-rgfm-page btn-sm"
-            (click)="changePage(effectiveTotalPages() - 1)"
-            [disabled]="page() >= effectiveTotalPages() - 1"
+            (click)="changePage(totalPages() - 1)"
+            [disabled]="page() >= totalPages() - 1"
             aria-label="Última página"
           >
             »
