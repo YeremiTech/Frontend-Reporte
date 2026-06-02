@@ -119,7 +119,11 @@
 
     <div class="block-table">
       @if (displayColumns().length === 0) {
-        <p class="hint center">Marque columnas en <strong>Asignar columnas</strong>.</p>
+        @if (canEdit()) {
+          <p class="hint center">Marque columnas en <strong>Asignar columnas</strong>.</p>
+        } @else {
+          <p class="hint center">No hay datos disponibles.</p>
+        }
       } @else {
         <div class="table-wrapper">
           <table class="table table-sm mb-0" aria-label="Datos de reportes">

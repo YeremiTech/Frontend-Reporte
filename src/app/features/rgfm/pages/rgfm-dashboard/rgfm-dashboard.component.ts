@@ -215,7 +215,8 @@ export class RgfmDashboardComponent {
         this.refreshFilterOptions();
         this.loadingDataset.set(false);
       },
-      error: () => {
+      error: (err) => {
+        this.toast.showError(err as ResolvedApiError);
         this.initializeColumnLayout();
         this.loadingDataset.set(false);
       },
