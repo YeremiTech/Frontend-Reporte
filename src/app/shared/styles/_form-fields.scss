@@ -5,9 +5,7 @@
 }
 
 @mixin rgfm-field-control {
-  transition:
-    border-color var(--dur-quick, 200ms) var(--ease-in-out, ease),
-    box-shadow var(--dur-quick, 200ms) var(--ease-in-out, ease);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
   &:focus,
   &:focus-visible {
@@ -42,9 +40,8 @@
     width: 100%;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
-    min-height: var(--touch-target-min, 44px);
-    padding: 0.5rem 0.75rem;
-    font-size: var(--text-0, 0.9rem);
+    padding: 0.5rem 0.65rem;
+    font-size: 0.8125rem;
     background: #fff;
     color: #1e293b;
     @include rgfm-field-control;
@@ -57,9 +54,8 @@
 
   .form-select-sm,
   select.form-select-sm {
-    min-height: calc(var(--touch-target-min, 44px) - 4px);
-    padding: 0.375rem 0.75rem;
-    font-size: var(--text-0, 0.9rem);
+    padding: 0.375rem 0.65rem;
+    font-size: 0.8125rem;
   }
 
   input[type='range'] {
@@ -71,8 +67,8 @@
   .input-group {
     .form-control {
       border-radius: 0 8px 8px 0;
-      padding: 0.5rem 0.85rem;
-      font-size: var(--text-1, 1rem);
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9375rem;
     }
 
     .input-group-text {
@@ -81,7 +77,6 @@
       background: #f1f5f9;
       color: #1a3a5a;
       transition: border-color 0.15s ease;
-      min-height: var(--touch-target-min, 44px);
     }
 
     &:focus-within {

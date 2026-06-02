@@ -14,13 +14,13 @@ export const EMPTY_STATE_PRESETS = {
     title: 'Sin datos para mostrar',
     description: 'Importe un Excel en Reportes y use Guardar para persistir los datos en la base.',
     buttonLabel: 'Ir a Reportes',
-    actionRoute: '/reportes',
+    actionRoute: '/',
   },
   graficos: {
     iconType: 'bootstrap',
     title: 'Sin datos para mostrar',
     description: 'Importe un Excel en Reportes y use Guardar para persistir los datos en la base.',
     buttonLabel: 'Ir a Reportes',
-    actionRoute: '/reportes',
+    actionRoute: '/',
   },
 } as const satisfies Record<string, EmptyStatePreset>;

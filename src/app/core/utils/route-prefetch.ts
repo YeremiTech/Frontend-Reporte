@@ -7,7 +7,7 @@ export function prefetchRouteChunk(route: string): void {
   prefetchedRoutes.add(route);
 
   switch (route) {
-    case '/reportes':
+    case '/':
       void import('../../features/rgfm/pages/rgfm-dashboard/rgfm-dashboard.component');
       break;
     case '/resumen':

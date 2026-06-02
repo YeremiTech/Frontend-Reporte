@@ -3,7 +3,7 @@
 .settings-page {
   display: flex;
   flex-direction: column;
-  gap: clamp(0.75rem, 0.55rem + 0.8vw, 1.15rem);
+  gap: 1rem;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
@@ -14,8 +14,7 @@
   background: var(--tg-surface, #fff);
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 12px;
-  padding: clamp(0.85rem, 0.65rem + 0.9vw, 1.25rem)
-    clamp(0.9rem, 0.7rem + 1vw, 1.35rem);
+  padding: 1rem 1.25rem;
   min-width: 0;
 }
 
@@ -29,7 +28,7 @@
 }
 
 .settings-card__title {
-  font-size: var(--text-2, 1.15rem);
+  font-size: 1.05rem;
   font-weight: 600;
   margin: 0;
 }
@@ -59,7 +58,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  font-size: var(--text-0, 0.9rem);
+  font-size: 0.8125rem;
   font-weight: 500;
 
   .form-control,
@@ -93,7 +92,7 @@
     display: flex;
     align-items: center;
     gap: 0.55rem;
-    min-height: var(--touch-target-min, 44px);
+    min-height: 36px;
   }
 
   .form-check-input {
@@ -104,7 +103,7 @@
   }
 
   .state-toggle__label {
-    font-size: var(--text-0, 0.9rem);
+    font-size: 0.85rem;
     font-weight: 600;
     color: #102a43;
     cursor: pointer;
@@ -158,8 +157,8 @@
 .users-table {
   border-collapse: collapse;
   width: 100%;
-  min-width: 480px;
-  font-size: var(--text-0, 0.9rem);
+  min-width: 520px;
+  font-size: 0.8rem;
 
   thead th {
     position: sticky;
@@ -249,8 +248,7 @@
   }
 
   .users-table {
-    min-width: 420px;
-    font-size: 0.85rem;
+    font-size: 0.76rem;
 
     thead th,
     tbody td {
@@ -264,9 +262,5 @@
 
   .status-text {
     display: none;
-  }
-
-  .col-email {
-    max-width: 180px;
   }
 }

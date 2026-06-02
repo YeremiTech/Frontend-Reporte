@@ -8,7 +8,6 @@
   border-radius: 12px;
   box-shadow: 0 1px 3px rgb(15 23 42 / 6%);
   overflow: hidden;
-  min-width: 0;
 
   &__header {
     display: flex;
@@ -26,7 +25,7 @@
 
     h2 {
       margin: 0;
-      font-size: var(--text-1, 1rem);
+      font-size: 0.9375rem;
       font-weight: 700;
       letter-spacing: 0.02em;
     }
@@ -50,7 +49,7 @@
   min-width: 8rem;
 
   span {
-    font-size: clamp(0.7rem, 0.66rem + 0.15vw, 0.78rem);
+    font-size: 0.6875rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -67,9 +66,8 @@
     width: 100%;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
-    min-height: var(--touch-target-min, 44px);
-    padding: 0.5rem 0.75rem;
-    font-size: var(--text-0, 0.9rem);
+    padding: 0.5rem 0.65rem;
+    font-size: 0.8125rem;
     background: #fff;
     color: #1e293b;
     @include fields.rgfm-field-control;
@@ -139,7 +137,7 @@
 
     h3 {
       margin: 0;
-      font-size: var(--text-1, 1rem);
+      font-size: 0.9375rem;
       font-weight: 700;
       letter-spacing: 0.02em;
       color: #fff;
@@ -158,8 +156,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: var(--touch-target-min, 44px);
-    height: var(--touch-target-min, 44px);
+    width: 2rem;
+    height: 2rem;
     margin: 0;
     padding: 0;
     border: 1px solid rgb(255 255 255 / 22%);
@@ -168,9 +166,8 @@
     color: #fff;
     cursor: pointer;
     transition:
-      background var(--dur-quick, 200ms) var(--ease-in-out, ease),
-      border-color var(--dur-quick, 200ms) var(--ease-in-out, ease),
-      transform var(--dur-quick, 200ms) var(--ease-out, ease);
+      background 0.15s ease,
+      border-color 0.15s ease;
 
     i {
       font-size: 1rem;
@@ -180,7 +177,6 @@
     &:hover {
       background: rgb(255 255 255 / 16%);
       border-color: rgb(255 170 73 / 45%);
-      transform: translateY(-1px);
     }
 
     &:focus-visible {
@@ -207,7 +203,7 @@
     padding: 5rem 1rem;
     text-align: center;
     color: #94a3b8;
-    font-size: var(--text-0, 0.9rem);
+    font-size: 0.8125rem;
   }
 }
 
@@ -217,7 +213,7 @@
   text-align: center;
   color: #6b7280;
   background: #fff;
-  border-radius: var(--radius-md, 12px);
+  border-radius: 12px;
   border: 1px dashed #cbd5e1;
 }
 
