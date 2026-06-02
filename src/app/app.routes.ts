@@ -17,8 +17,10 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        pathMatch: 'full',
-        redirectTo: 'resumen',
+        loadComponent: () =>
+          import('./features/rgfm/pages/rgfm-dashboard/rgfm-dashboard.component').then(
+            (m) => m.RgfmDashboardComponent
+          ),
       },
       {
         path: 'graficos',

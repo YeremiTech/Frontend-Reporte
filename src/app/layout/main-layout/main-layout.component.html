@@ -15,7 +15,7 @@
           class="nav-item"
           [routerLink]="item.route"
           routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }"
+          [routerLinkActiveOptions]="{ exact: item.route === '/' }"
           (mouseenter)="prefetchRoute(item.route)"
           (focus)="prefetchRoute(item.route)"
           (click)="onNavigate()"
@@ -39,6 +39,36 @@
   }
 
   <main id="contenido-principal" class="main-content">
+    <header class="topbar" aria-label="Barra superior">
+      <button type="button" class="topbar__menu" (click)="sidebar.expand()" aria-label="Abrir menú">
+        <i class="bi bi-list" aria-hidden="true"></i>
+      </button>
+
+      <div class="topbar__brand">
+        <div class="topbar__logo" aria-hidden="true">H</div>
+        <div class="topbar__title">
+          <div class="topbar__name">HopData</div>
+          <div class="topbar__subtitle">Reportes</div>
+        </div>
+      </div>
+
+      <div class="topbar__spacer"></div>
+
+      <div class="topbar__user">
+        <button type="button" class="topbar__user-btn" (click)="toggleUserMenu()" [attr.aria-expanded]="userMenuOpen()">
+          <span class="topbar__user-name">{{ userDisplayName() }}</span>
+          <i class="bi bi-caret-down-fill" aria-hidden="true"></i>
+        </button>
+        @if (userMenuOpen()) {
+          <div class="topbar__menu" role="menu">
+            <button type="button" class="topbar__menu-item" (click)="logout()" role="menuitem">
+              <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+              Cerrar sesión
+            </button>
+          </div>
+        }
+      </div>
+    </header>
     <div class="content-body">
       <router-outlet />
     </div>

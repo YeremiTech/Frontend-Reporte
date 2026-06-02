@@ -1,4 +1,4 @@
-import { afterNextRender, ChangeDetectionStrategy, Component, computed, inject, OnDestroy } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, computed, inject, OnDestroy, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
@@ -30,12 +30,15 @@ export class MainLayoutComponent implements OnDestroy {
   private readonly viewSettings = inject(AppViewSettingsService);
   private readonly presenceApi = inject(PresenceApiService);
 
+  readonly userMenuOpen = signal(false);
+
   private routerSub?: Subscription;
   private refreshIntervalId?: ReturnType<typeof setInterval>;
   private presenceIntervalId?: ReturnType<typeof setInterval>;
   private beforeUnloadHandler?: () => void;
 
   private readonly baseNavItems: NavItem[] = [
+    { label: 'Reportes', route: '/', icon: 'bi-grid-1x2-fill' },
     { label: 'Resumen', route: '/resumen', icon: 'bi-clipboard-data-fill' },
     { label: 'Gráficos', route: '/graficos', icon: 'bi-bar-chart-fill' },
   ];
@@ -127,6 +130,7 @@ export class MainLayoutComponent implements OnDestroy {
     if (typeof globalThis.window !== 'undefined' && globalThis.window.innerWidth < 992) {
       this.sidebar.collapse();
     }
+    this.userMenuOpen.set(false);
   }
 
   prefetchRoute(route: string): void {
@@ -137,7 +141,12 @@ export class MainLayoutComponent implements OnDestroy {
     this.sidebar.collapse();
   }
 
+  toggleUserMenu(): void {
+    this.userMenuOpen.update((v) => !v);
+  }
+
   logout(): void {
+    this.userMenuOpen.set(false);
     this.auth.logout();
   }
 }
