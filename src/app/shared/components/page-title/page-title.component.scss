@@ -10,15 +10,13 @@
   margin: 0;
   height: 100%;
   box-sizing: border-box;
-  padding: 0 1rem 0 0.65rem;
+  padding: 0 0.65rem;
   background: linear-gradient(135deg, #1a3a5a 0%, #102a43 100%);
   color: #fff;
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(16, 42, 67, 0.18);
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
 }
 
 .btn-title-menu {
@@ -51,8 +49,13 @@
 }
 
 .title-center {
-  grid-column: 2;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   margin: 0;
+  width: calc(100% - (var(--touch-target-min, 44px) * 2) - 1.3rem);
+  max-width: calc(100% - (var(--touch-target-min, 44px) * 2) - 1.3rem);
   font-size: clamp(1rem, 4.2vw, 1.75rem);
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -62,23 +65,18 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-width: 0;
+  pointer-events: none;
 }
 
 @include bp.up(bp.$bp-md) {
   .block-title {
-    display: flex;
-    align-items: center;
-    padding: 0 1.25rem 0 1rem;
+    padding: 0 1rem;
   }
 
   .title-center {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
     font-size: 32px;
-    max-width: calc(100% - 7rem);
-    pointer-events: none;
+    width: calc(100% - 8rem);
+    max-width: calc(100% - 8rem);
   }
 }
 
