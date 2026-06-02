@@ -6,7 +6,7 @@
     "start": "ng serve --configuration development",
     "start:prod": "ng serve --configuration production",
     "lighthouse": "npm run preview",
-    "build": "ng build",
+    "build": "ng build && node scripts/postbuild-render-spa.mjs",
     "preview": "ng build && npx --yes http-server dist/comisiones-frontend/browser -p 4200 -c-1",
     "build:stats": "ng build --stats-json",
     "watch": "ng build --watch --configuration development"

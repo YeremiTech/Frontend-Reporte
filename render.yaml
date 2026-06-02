@@ -1,7 +1,13 @@
 # Configuración de referencia para el Static Site en Render.
-# Si el servicio ya existe, en Dashboard → Redirects/Rewrites agregue:
+#
+# OBLIGATORIO en Dashboard → Settings:
+#   Publish directory: dist/comisiones-frontend/browser
+#
+# RECOMENDADO en Dashboard → Redirects/Rewrites (URLs sin #):
 #   Source: /*  |  Destination: /index.html  |  Action: Rewrite
-# Publish directory: dist/comisiones-frontend/browser
+#   Luego en environment.ts poner useHashRouting: false
+#
+# Sin rewrite, el build usa useHashRouting: true (/#/graficos, /#/resumen).
 
 services:
   - type: web
