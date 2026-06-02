@@ -2,6 +2,8 @@ $bp-sm: 576px;
 $bp-md: 768px;
 $bp-lg: 992px;
 $bp-xl: 1200px;
+$bp-desktop: 1024px;
+$bp-xxl: 1440px;
 
 @mixin down($max) {
   @media (max-width: ($max - 0.02px)) {
@@ -17,6 +19,36 @@ $bp-xl: 1200px;
 
 @mixin between($min, $max) {
   @media (min-width: $min) and (max-width: ($max - 0.02px)) {
+    @content;
+  }
+}
+
+/* Ranges (Mobile/Tablet/Desktop/Large Desktop)
+   - Mobile: 320–767
+   - Tablet: 768–1023
+   - Desktop: 1024–1439
+   - Large Desktop: 1440+
+*/
+@mixin mobile {
+  @media (max-width: 767.98px) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: 768px) and (max-width: 1023.98px) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: 1024px) and (max-width: 1439.98px) {
+    @content;
+  }
+}
+
+@mixin large-desktop {
+  @media (min-width: 1440px) {
     @content;
   }
 }

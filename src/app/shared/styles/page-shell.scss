@@ -2,27 +2,28 @@
 
 /** Altura fija del bloque título (igual en Reportes, Resumen, Gráficos). */
 :root {
-  --page-title-height: 68px;
-  --page-block-gap: 0.6rem;
-  --page-body-padding-x: 0.35rem;
-  --page-body-padding-bottom: 0.5rem;
+  --page-title-height: clamp(56px, 5.2vw, 72px);
+  --page-block-gap: clamp(0.5rem, 0.35rem + 0.6vw, 0.9rem);
+  --page-body-padding-x: clamp(0.15rem, 0.05rem + 0.8vw, 0.9rem);
+  --page-body-padding-bottom: clamp(0.4rem, 0.25rem + 0.6vw, 0.9rem);
   --empty-state-panel-min-height: 17.5rem;
 }
 
 @include bp.down(bp.$bp-md) {
   :root {
-    --page-title-height: 60px;
-    --page-block-gap: 0.5rem;
-    --page-body-padding-x: 0.25rem;
-    --page-body-padding-bottom: 0.4rem;
     --empty-state-panel-min-height: 14rem;
   }
 }
 
 @include bp.down(bp.$bp-sm) {
   :root {
-    --page-title-height: 56px;
-    --page-body-padding-x: 0.15rem;
+    --empty-state-panel-min-height: 13.25rem;
+  }
+}
+
+@include bp.large-desktop {
+  :root {
+    --empty-state-panel-min-height: 19.5rem;
   }
 }
 
@@ -67,6 +68,7 @@
   overflow: hidden;
   padding: 0 var(--page-body-padding-x) var(--page-body-padding-bottom);
   gap: var(--page-block-gap);
+  min-width: 0;
 }
 
 /** Hijo directo que debe llenar el bloque cuerpo (tabla, empty state, reportes). */

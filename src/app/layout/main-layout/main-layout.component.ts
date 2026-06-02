@@ -36,6 +36,7 @@ export class MainLayoutComponent implements OnDestroy {
   private beforeUnloadHandler?: () => void;
 
   private readonly baseNavItems: NavItem[] = [
+    { label: 'Reportes', route: '/reportes', icon: 'bi-grid-1x2-fill' },
     { label: 'Resumen', route: '/resumen', icon: 'bi-clipboard-data-fill' },
     { label: 'Gráficos', route: '/graficos', icon: 'bi-bar-chart-fill' },
   ];

@@ -12,6 +12,7 @@
   border-radius: 12px;
   box-shadow: var(--card-shadow);
   overflow: hidden;
+  min-width: 0;
 }
 
 .data-table-wrap {
@@ -20,6 +21,7 @@
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  min-width: 0;
 }
 
 .data-table {
@@ -28,6 +30,7 @@
   font-size: 0.78rem;
   min-width: max-content;
   width: 100%;
+  max-width: 100%;
 
   th,
   td {
@@ -40,6 +43,7 @@
     min-width: 4.5rem;
     max-width: none;
     overflow: visible;
+    line-height: 1.25;
   }
 
   thead th {

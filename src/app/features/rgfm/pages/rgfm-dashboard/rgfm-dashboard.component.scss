@@ -11,6 +11,7 @@
   border-radius: 12px;
   box-shadow: var(--card-shadow);
   overflow: hidden;
+  min-width: 0;
 }
 
 .block-actions-row {
@@ -19,10 +20,11 @@
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  gap: clamp(0.55rem, 0.35rem + 0.8vw, 0.9rem);
+  padding: clamp(0.6rem, 0.45rem + 0.8vw, 0.95rem) clamp(0.75rem, 0.55rem + 1vw, 1.15rem);
   border-bottom: 1px solid #eef2f7;
   background: #fafbfc;
+  min-width: 0;
 }
 
 .filters-group {
@@ -30,6 +32,7 @@
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 0.55rem;
+  min-width: 0;
 
   .rgfm-field {
     min-width: 140px;
@@ -42,6 +45,7 @@
   align-items: center;
   gap: 0.5rem;
   margin-left: auto;
+  min-width: 0;
 }
 
 .hidden-input {
@@ -74,6 +78,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .table-wrapper {
@@ -82,14 +87,16 @@
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  min-width: 0;
 }
 
 table {
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 0.78rem;
+  font-size: var(--text-0, 0.9rem);
   min-width: max-content;
   width: 100%;
+  max-width: 100%;
 }
 
 th,
@@ -103,6 +110,7 @@ td {
   min-width: 4.5rem;
   max-width: none;
   overflow: visible;
+  line-height: 1.25;
 }
 
 thead th {
@@ -119,8 +127,8 @@ thead th {
   left: 0;
   z-index: 1;
   background: #fff;
-  min-width: 44px;
-  max-width: 44px;
+  min-width: var(--touch-target-min, 44px);
+  max-width: var(--touch-target-min, 44px);
   text-align: center;
   box-shadow: 2px 0 6px rgba(0, 0, 0, 0.05);
 }
@@ -296,7 +304,7 @@ thead .sticky-col {
   }
 
   table {
-    font-size: 0.72rem;
+    font-size: var(--text-0, 0.9rem);
   }
 
   th,

@@ -49,6 +49,17 @@ export class AuthService {
     });
   }
 
+  /**
+   * Cierra sesión local sin llamar al backend (útil cuando el backend ya respondió 401).
+   */
+  forceLogout(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    this.currentUser.set(null);
+    this.reportDataStore.clear();
+    this.router.navigate(['/login']);
+  }
+
   getToken(): string | null {
     return localStorage.getItem(TOKEN_KEY);
   }

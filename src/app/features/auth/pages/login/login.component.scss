@@ -84,7 +84,7 @@
 
   h1 {
     margin: 0.75rem 0 0.25rem;
-    font-size: 1.5rem;
+    font-size: var(--text-3, 1.5rem);
     font-weight: 700;
     color: #102a43;
   }
@@ -92,7 +92,7 @@
   p {
     margin: 0;
     color: #5f6b7a;
-    font-size: 0.9rem;
+    font-size: var(--text-0, 0.9rem);
   }
 }
 
@@ -124,7 +124,7 @@
   min-width: 12.5rem;
   min-height: 48px;
   padding: 0.7rem 2.25rem;
-  font-size: 1rem;
+  font-size: var(--text-1, 1rem);
   border-radius: 10px;
   box-shadow: 0 4px 14px rgb(26 58 90 / 32%);
   gap: 0.35rem;
@@ -152,6 +152,22 @@
 
   50% {
     transform: translateY(-12px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .login-submit {
+    transition:
+      transform var(--dur-quick, 200ms) var(--ease-out, ease),
+      box-shadow var(--dur-quick, 200ms) var(--ease-out, ease);
+
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
   }
 }
 
