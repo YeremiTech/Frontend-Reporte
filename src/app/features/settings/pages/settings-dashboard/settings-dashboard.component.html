@@ -112,7 +112,7 @@
                 <th scope="col">Usuario</th>
                 <th scope="col" class="col-email">Correo</th>
                 <th scope="col" class="col-status">Estado</th>
-                <th scope="col" class="col-status">Conexión</th>
+                <th scope="col" class="col-status col-status--connection">Conexión</th>
                 <th scope="col" class="col-role">Rol</th>
                 <th scope="col" class="col-date">Creado</th>
                 <th scope="col" class="col-actions">Acciones</th>
@@ -124,23 +124,17 @@
                   <td>{{ user.username }}</td>
                   <td class="col-email">{{ user.email }}</td>
                   <td class="col-status">
-                    <span
-                      class="status-dot"
-                      [class.status-dot--inactive]="!user.active"
-                      [title]="user.active ? 'Activo' : 'Inactivo'"
-                      aria-hidden="true"
-                    ></span>
                     <span class="status-text">{{ user.active ? 'Activo' : 'Inactivo' }}</span>
                   </td>
-                  <td class="col-status">
+                  <td class="col-status col-status--connection">
                     <span
                       class="status-dot"
                       [class.status-dot--inactive]="!user.online"
-                      [title]="user.online ? 'Conectado' : ('Últ. visto: ' + formatDate(user.lastSeenAt ?? ''))"
+                      [title]="user.online ? 'Conectado' : 'Desconectado'"
                       aria-hidden="true"
                     ></span>
                     <span class="status-text">
-                      {{ user.online ? 'Conectado' : (user.lastSeenAt ? ('Visto ' + formatDate(user.lastSeenAt)) : '—') }}
+                      {{ user.online ? 'Conectado' : 'Desconectado' }}
                     </span>
                   </td>
                   <td class="col-role">
