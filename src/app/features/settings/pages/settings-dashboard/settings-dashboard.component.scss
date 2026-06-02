@@ -3,7 +3,11 @@
 .settings-page {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .settings-card {
@@ -11,6 +15,7 @@
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 12px;
   padding: 1rem 1.25rem;
+  min-width: 0;
 }
 
 .settings-card__header {
@@ -19,19 +24,13 @@
   justify-content: space-between;
   gap: 0.75rem;
   flex-wrap: wrap;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .settings-card__title {
   font-size: 1.05rem;
   font-weight: 600;
   margin: 0;
-}
-
-.settings-card__hint {
-  font-size: 0.875rem;
-  color: #5c5c5c;
-  margin: 0 0 1rem;
 }
 
 .settings-form {
@@ -52,32 +51,7 @@
 .settings-form__actions {
   display: flex;
   gap: 0.5rem;
-}
-
-.row-actions {
-  display: inline-flex;
-  gap: 0.35rem;
-  justify-content: flex-end;
-}
-
-.row-editing {
-  background: rgba(255, 170, 73, 0.12);
-}
-
-.btn-rgfm-danger {
-  background: #dc3545;
-  border-color: #dc3545;
-  color: #fff;
-
-  &:hover:not(:disabled) {
-    background: #bb2d3b;
-    border-color: #bb2d3b;
-    color: #fff;
-  }
-
-  &:disabled {
-    opacity: 0.45;
-  }
+  flex-wrap: wrap;
 }
 
 .settings-field {
@@ -94,12 +68,92 @@
   font-size: 0.9rem;
 }
 
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  border-radius: 8px;
+  border: 1px solid #e8edf3;
+}
+
+.users-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 520px;
+  font-size: 0.8rem;
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: linear-gradient(180deg, #1a3a5a, #102a43);
+    color: #fff;
+    font-weight: 600;
+    padding: 0.55rem 0.85rem;
+    text-align: left;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+  }
+
+  tbody td {
+    padding: 0.5rem 0.85rem;
+    border-bottom: 1px solid #f0f4f8;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  @media (hover: hover) {
+    tbody tr:not(.row-editing):hover td {
+      background: #f5f8ff;
+    }
+  }
+}
+
+.col-email {
+  min-width: 160px;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.col-role {
+  width: 80px;
+}
+
+.col-date {
+  width: 130px;
+  white-space: nowrap;
+  color: #5f6b7a;
+  font-size: 0.78rem;
+}
+
+.col-actions {
+  width: 90px;
+  text-align: right;
+}
+
+.row-actions {
+  display: inline-flex;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
+.row-editing td {
+  background: rgba(255, 170, 73, 0.1) !important;
+}
+
 .role-badge {
   display: inline-block;
-  padding: 0.15rem 0.5rem;
+  padding: 0.15rem 0.55rem;
   border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   background: #e8f0fe;
   color: #1a4fad;
 }
@@ -107,4 +161,24 @@
 .role-badge--admin {
   background: #fff3e0;
   color: #b45309;
+}
+
+@include bp.down(bp.$bp-sm) {
+  .settings-card {
+    padding: 0.75rem 0.9rem;
+    border-radius: 10px;
+  }
+
+  .users-table {
+    font-size: 0.76rem;
+
+    thead th,
+    tbody td {
+      padding: 0.45rem 0.65rem;
+    }
+  }
+
+  .col-date {
+    display: none;
+  }
 }

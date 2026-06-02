@@ -6,6 +6,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserAdminApiService } from '../../../../core/services/api.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -28,7 +29,7 @@ type FormMode = 'create' | 'edit';
 @Component({
   selector: 'app-settings-dashboard',
   standalone: true,
-  imports: [FormsModule, PageShellComponent, LoaderComponent, TailgridsAlertComponent],
+  imports: [NgClass, FormsModule, PageShellComponent, LoaderComponent, TailgridsAlertComponent],
   templateUrl: './settings-dashboard.component.html',
   styleUrl: './settings-dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

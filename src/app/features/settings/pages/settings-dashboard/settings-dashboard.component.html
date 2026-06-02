@@ -29,10 +29,6 @@
           </button>
         }
       </div>
-      <p class="settings-card__hint">
-        Los usuarios con rol <strong>USER</strong> pueden ver reportes, gráficos y resumen, pero no importar ni guardar Excel.
-      </p>
-
       <form class="settings-form" (ngSubmit)="submitForm()">
         <label class="settings-field">
           <span>Usuario</span>
@@ -81,7 +77,7 @@
         </label>
         <div class="settings-form__actions">
           <button type="submit" class="btn btn-rgfm-primary btn-sm" [disabled]="submitting()">
-            <i class="bi" [class]="isEditing() ? 'bi-check-lg me-1' : 'bi-person-plus-fill me-1'"></i>
+            <i [ngClass]="['bi', isEditing() ? 'bi-check-lg' : 'bi-person-plus-fill']" aria-hidden="true"></i>
             {{ submitLabel() }}
           </button>
         </div>
@@ -93,48 +89,49 @@
       @if (users().length === 0 && !loading()) {
         <p class="settings-empty">No hay usuarios registrados.</p>
       } @else {
-        <div class="table-wrapper">
-          <table class="table table-sm mb-0" aria-label="Lista de usuarios">
+        <div class="table-scroll">
+          <table class="users-table" aria-label="Lista de usuarios">
             <thead>
               <tr>
                 <th scope="col">Usuario</th>
-                <th scope="col">Correo</th>
-                <th scope="col">Rol</th>
-                <th scope="col">Creado</th>
-                <th scope="col" class="text-end">Acciones</th>
+                <th scope="col" class="col-email">Correo</th>
+                <th scope="col" class="col-role">Rol</th>
+                <th scope="col" class="col-date">Creado</th>
+                <th scope="col" class="col-actions">Acciones</th>
               </tr>
             </thead>
             <tbody>
               @for (user of users(); track user.id) {
                 <tr [class.row-editing]="editingUserId() === user.id">
                   <td>{{ user.username }}</td>
-                  <td>{{ user.email }}</td>
-                  <td>
+                  <td class="col-email">{{ user.email }}</td>
+                  <td class="col-role">
                     <span class="role-badge" [class.role-badge--admin]="user.role === 'ADMIN'">
                       {{ user.role }}
                     </span>
                   </td>
-                  <td>{{ formatDate(user.createdAt) }}</td>
-                  <td class="text-end">
+                  <td class="col-date">{{ formatDate(user.createdAt) }}</td>
+                  <td class="col-actions">
                     <div class="row-actions">
                       <button
                         type="button"
-                        class="btn btn-rgfm-primary btn-sm"
+                        class="btn btn-rgfm-primary btn-sm btn-icon"
                         (click)="startEdit(user)"
                         [disabled]="submitting()"
+                        [title]="'Editar ' + user.username"
                         [attr.aria-label]="'Editar ' + user.username"
                       >
-                        <i class="bi bi-pencil-fill"></i>
+                        <i class="bi bi-pencil-fill" aria-hidden="true"></i>
                       </button>
                       <button
                         type="button"
-                        class="btn btn-rgfm-danger btn-sm"
+                        class="btn btn-rgfm-danger btn-sm btn-icon"
                         (click)="deleteUser(user)"
                         [disabled]="submitting() || isCurrentUser(user)"
-                        [title]="isCurrentUser(user) ? 'No puede eliminar su propia cuenta' : 'Eliminar usuario'"
+                        [title]="isCurrentUser(user) ? 'No puede eliminar su propia cuenta' : 'Eliminar ' + user.username"
                         [attr.aria-label]="'Eliminar ' + user.username"
                       >
-                        <i class="bi bi-trash-fill"></i>
+                        <i class="bi bi-trash-fill" aria-hidden="true"></i>
                       </button>
                     </div>
                   </td>
@@ -146,4 +143,5 @@
       }
     </div>
   </section>
+
 </app-page-shell>
