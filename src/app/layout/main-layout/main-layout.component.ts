@@ -7,6 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { PresenceApiService } from '../../core/services/api.service';
 import { SidebarService } from '../../core/services/sidebar.service';
 import { prefetchRouteChunk } from '../../core/utils/route-prefetch';
+import { environment } from '../../../environments/environment';
 
 interface NavItem {
   label: string;
@@ -32,6 +33,7 @@ export class MainLayoutComponent implements OnDestroy {
   private routerSub?: Subscription;
   private refreshIntervalId?: ReturnType<typeof setInterval>;
   private presenceIntervalId?: ReturnType<typeof setInterval>;
+  private beforeUnloadHandler?: () => void;
 
   private readonly baseNavItems: NavItem[] = [
     { label: 'Reportes', route: '/', icon: 'bi-grid-1x2-fill' },
@@ -84,11 +86,27 @@ export class MainLayoutComponent implements OnDestroy {
           if (!this.auth.isAuthenticated()) {
             return;
           }
-          if (typeof document !== 'undefined' && document.hidden) {
-            return;
-          }
           this.presenceApi.ping().subscribe({ error: () => undefined });
         }, 30_000);
+
+        this.beforeUnloadHandler = () => {
+          const token = this.auth.getToken();
+          if (!token) {
+            return;
+          }
+          // Best-effort: mark offline when tab closes (keepalive allows request during unload).
+          fetch(`${environment.apiUrl}/api/presence/offline`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: '{}',
+            keepalive: true,
+          }).catch(() => undefined);
+        };
+
+        globalThis.window.addEventListener('beforeunload', this.beforeUnloadHandler);
       }
     });
   }
@@ -100,6 +118,9 @@ export class MainLayoutComponent implements OnDestroy {
     }
     if (this.presenceIntervalId != null && typeof globalThis.window !== 'undefined') {
       globalThis.window.clearInterval(this.presenceIntervalId);
+    }
+    if (this.beforeUnloadHandler && typeof globalThis.window !== 'undefined') {
+      globalThis.window.removeEventListener('beforeunload', this.beforeUnloadHandler);
     }
   }
 

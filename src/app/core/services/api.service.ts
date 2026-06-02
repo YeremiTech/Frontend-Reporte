@@ -160,4 +160,10 @@ export class PresenceApiService {
       .post<{ ok: boolean }>(`${environment.apiUrl}/api/presence/ping`, {})
       .pipe(catchError((err) => throwError(() => mapHttpError(err))));
   }
+
+  offline(): Observable<{ ok: boolean }> {
+    return this.http
+      .post<{ ok: boolean }>(`${environment.apiUrl}/api/presence/offline`, {})
+      .pipe(catchError((err) => throwError(() => mapHttpError(err))));
+  }
 }

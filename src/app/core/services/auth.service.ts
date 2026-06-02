@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { AuthResponse, AuthUser, LoginRequest } from '../models/auth.model';
 import { ReportDataStoreService } from './report-data-store.service';
-import { AuthApiService } from './api.service';
+import { AuthApiService, PresenceApiService } from './api.service';
 
 const TOKEN_KEY = 'comisiones_token';
 const USER_KEY = 'comisiones_user';
@@ -13,6 +13,7 @@ export class AuthService {
   private readonly router = inject(Router);
   private readonly reportDataStore = inject(ReportDataStoreService);
   private readonly authApi = inject(AuthApiService);
+  private readonly presenceApi = inject(PresenceApiService);
 
   readonly currentUser = signal<AuthUser | null>(this.loadUser());
 
@@ -28,11 +29,24 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    this.currentUser.set(null);
-    this.reportDataStore.clear();
-    this.router.navigate(['/login']);
+    const token = this.getToken();
+    const finish = () => {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      this.currentUser.set(null);
+      this.reportDataStore.clear();
+      this.router.navigate(['/login']);
+    };
+
+    if (!token) {
+      finish();
+      return;
+    }
+
+    this.presenceApi.offline().subscribe({
+      next: () => finish(),
+      error: () => finish(),
+    });
   }
 
   getToken(): string | null {
