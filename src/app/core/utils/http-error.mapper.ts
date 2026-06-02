@@ -13,7 +13,7 @@ export function mapHttpError(error: unknown): ResolvedApiError {
     if (error.status === 0) {
       return resolvedError(
         ApiErrorCode.UNKNOWN_ERROR,
-        'No se pudo conectar con el servidor. Verifique que el backend esté activo.'
+        'Sin conexión con el servidor.'
       );
     }
 
