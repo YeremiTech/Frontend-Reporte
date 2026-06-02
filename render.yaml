@@ -1,0 +1,15 @@
+# Configuración de referencia para el Static Site en Render.
+# Si el servicio ya existe, en Dashboard → Redirects/Rewrites agregue:
+#   Source: /*  |  Destination: /index.html  |  Action: Rewrite
+# Publish directory: dist/comisiones-frontend/browser
+
+services:
+  - type: web
+    name: frontend-reporte
+    runtime: static
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist/comisiones-frontend/browser
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

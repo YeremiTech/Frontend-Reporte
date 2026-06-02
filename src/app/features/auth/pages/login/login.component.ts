@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { validateLoginForm } from '../../../../core/utils/api-error.resolver';
@@ -18,6 +18,7 @@ import { TailgridsAlertComponent } from '../../../../shared/components/tailgrids
 export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   protected readonly toast = inject(ToastService);
 
   username = '';
@@ -38,7 +39,12 @@ export class LoginComponent {
     this.auth.login({ username: this.username.trim(), password: this.password }).subscribe({
       next: () => {
         this.loading.set(false);
-        this.router.navigate(['/']);
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        const target =
+          returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//')
+            ? returnUrl
+            : '/';
+        void this.router.navigateByUrl(target);
       },
       error: (err) => {
         this.toast.showError(err);

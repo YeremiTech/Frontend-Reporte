@@ -1,72 +1,64 @@
-@use '../../../../shared/styles/breakpoints' as bp;
-
 :host {
   display: block;
   min-height: 100dvh;
 }
 
-.not-found-page {
+.app-error-page {
+  position: relative;
   min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: calc(1.5rem + var(--safe-top)) calc(1.5rem + var(--safe-right))
-    calc(1.5rem + var(--safe-bottom)) calc(1.5rem + var(--safe-left));
-  background: linear-gradient(135deg, #102a43 0%, #1a3a5a 45%, #2a5080 100%);
+  padding: 1.5rem;
+  background: var(--app-bg, #eef2f7);
+  overflow: hidden;
 }
 
-.not-found-page__card {
-  max-width: 28rem;
-  width: 100%;
-  padding: 2rem 1.75rem;
-  border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.97);
-  text-align: center;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
-}
-
-.not-found-page__code {
-  margin: 0 0 0.5rem;
-  font-size: 3rem;
-  font-weight: 700;
+.app-error-page__watermark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-size: clamp(8rem, 40vw, 18rem);
+  font-weight: 800;
   line-height: 1;
-  color: #ffaa49;
+  color: #1a3a5a;
+  opacity: 0.06;
+  user-select: none;
+  pointer-events: none;
 }
 
-.not-found-page__title {
-  margin: 0 0 0.75rem;
-  font-size: 1.35rem;
+.app-error-page__content {
+  position: relative;
+  z-index: 1;
+  max-width: 22rem;
+  text-align: center;
+}
+
+.app-error-page__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: #102a43;
 }
 
-.not-found-page__text {
-  margin: 0 0 1.5rem;
-  color: #486581;
-  font-size: 0.95rem;
-  line-height: 1.5;
+.app-error-page__text {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #5f6b7a;
 }
 
-.not-found-page__action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 12rem;
-  min-height: var(--touch-target-min, 44px);
-  text-decoration: none;
-}
+.app-error-page__link {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1a3a5a;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 
-@include bp.down(bp.$bp-sm) {
-  .not-found-page__card {
-    padding: 1.5rem 1.25rem;
-  }
-
-  .not-found-page__code {
-    font-size: 2.5rem;
-  }
-
-  .not-found-page__action {
-    width: 100%;
-    min-width: 0;
+  &:hover {
+    color: #2a5080;
   }
 }
