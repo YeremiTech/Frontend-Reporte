@@ -122,15 +122,19 @@
                   </button>
                 </div>
               </header>
-              @if (isPanelExpanded(panel.kind)) {
-                <div class="chart-panel__body">
-                  @if (panelOptions(panel.kind); as chartOptions) {
-                    <app-apex-chart [options]="chartOptions" />
-                  } @else {
-                    <p class="chart-panel__empty">No hay datos suficientes para este gráfico.</p>
-                  }
+              <div class="rgfm-collapse" [class.rgfm-collapse--open]="isPanelExpanded(panel.kind)">
+                <div class="rgfm-collapse__inner">
+                  <div class="chart-panel__body">
+                    @if (isPanelExpanded(panel.kind)) {
+                      @if (panelOptions(panel.kind); as chartOptions) {
+                        <app-apex-chart [options]="chartOptions" />
+                      } @else {
+                        <p class="chart-panel__empty">No hay datos suficientes para este gráfico.</p>
+                      }
+                    }
+                  </div>
                 </div>
-              }
+              </div>
             </article>
           }
         }

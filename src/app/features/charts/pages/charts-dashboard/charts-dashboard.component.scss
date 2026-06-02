@@ -189,6 +189,15 @@
     }
   }
 
+  /* Icono indicador (chevron) con rotación suave */
+  &__action-btn .bi {
+    transition: transform var(--dur, 280ms) var(--ease-in-out, ease);
+  }
+
+  &--collapsed &__action-btn .bi {
+    transform: rotate(180deg);
+  }
+
   &__body {
     flex: 1;
     min-height: clamp(220px, 42vh, 340px);

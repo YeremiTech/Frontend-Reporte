@@ -238,9 +238,8 @@
 @include bp.down(bp.$bp-lg) {
   /* Mobile/Tablet: el sidebar sí se esconde por completo */
   .app-shell.sidebar-collapsed .sidebar {
-    width: 0;
-    min-width: 0;
-    transform: translateX(-8px);
+    /* Mantener width estable y animar con transform/opacity (más fluido) */
+    transform: translateX(-102%);
     opacity: 0;
     box-shadow: none;
     pointer-events: none;
@@ -255,6 +254,8 @@
     height: 100dvh;
     padding-top: var(--safe-top);
     padding-bottom: var(--safe-bottom);
+    transform: translateX(0);
+    opacity: 1;
   }
 
   .app-shell:not(.sidebar-collapsed) .sidebar-backdrop {

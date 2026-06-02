@@ -157,6 +157,37 @@ body {
   }
 }
 
+/* Collapse/Expand (altura + fade + translate) sin saltos */
+.rgfm-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition:
+    grid-template-rows var(--dur-slow, 420ms) var(--ease-in-out, ease),
+    opacity var(--dur, 280ms) var(--ease-in-out, ease),
+    transform var(--dur, 280ms) var(--ease-in-out, ease);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-5px);
+  will-change: opacity, transform;
+}
+
+.rgfm-collapse__inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.rgfm-collapse--open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rgfm-collapse {
+    transition: none;
+  }
+}
+
 .skip-link {
   position: absolute;
   left: -9999px;
