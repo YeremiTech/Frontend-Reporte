@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { EMPTY, Observable, catchError, tap } from 'rxjs';
 import type { ChartAggregation, ChartKind } from '../models/chart.model';
 import {
   ChartsViewSettings,
@@ -26,7 +26,8 @@ export class AppViewSettingsService {
 
   load(): Observable<ViewSettings> {
     return this.api.getSettings().pipe(
-      tap((settings) => this.applyServerSettings(settings))
+      tap((settings) => this.applyServerSettings(settings)),
+      catchError(() => EMPTY)
     );
   }
 
@@ -37,7 +38,8 @@ export class AppViewSettingsService {
         if (settings.revision !== knownRevision) {
           this.applyServerSettings(settings);
         }
-      })
+      }),
+      catchError(() => EMPTY)
     );
   }
 

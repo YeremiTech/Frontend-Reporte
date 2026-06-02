@@ -71,8 +71,11 @@ export class MainLayoutComponent implements OnDestroy {
 
       if (typeof globalThis.window !== 'undefined') {
         this.refreshIntervalId = globalThis.window.setInterval(() => {
+          if (typeof document !== 'undefined' && document.hidden) {
+            return;
+          }
           this.viewSettings.refreshIfNewer().subscribe();
-        }, 45_000);
+        }, 5_000);
       }
     });
   }
