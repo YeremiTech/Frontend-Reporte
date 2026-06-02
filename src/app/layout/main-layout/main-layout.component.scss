@@ -43,6 +43,7 @@
 
 .app-shell.sidebar-collapsed .sidebar-profile {
   padding: 0.85rem 0.5rem 0.65rem;
+  transform: translateY(-2px);
 }
 
 .app-shell.sidebar-collapsed .avatar {
@@ -55,7 +56,13 @@
 .app-shell.sidebar-collapsed .profile-name,
 .app-shell.sidebar-collapsed .profile-email,
 .app-shell.sidebar-collapsed .profile-role {
-  display: none;
+  opacity: 0;
+  transform: translateY(-6px);
+  max-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .app-shell.sidebar-collapsed .nav-item {
@@ -65,9 +72,14 @@
   padding-right: 0;
 }
 
+.app-shell.sidebar-collapsed .sidebar-nav {
+  padding-top: 0.35rem;
+}
+
 .app-shell.sidebar-collapsed .nav-label {
-  width: 0;
+  max-width: 0;
   opacity: 0;
+  transform: translateY(-4px);
   margin: 0;
   pointer-events: none;
 }
@@ -77,6 +89,11 @@
   padding: 1.25rem 1rem 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
+  overflow: hidden;
+  transition:
+    padding var(--dur, 280ms) var(--ease-in-out, ease),
+    opacity var(--dur, 280ms) var(--ease-in-out, ease),
+    transform var(--dur, 280ms) var(--ease-in-out, ease);
 }
 
 .avatar {
@@ -90,6 +107,13 @@
   justify-content: center;
   font-size: 1.6rem;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  transition:
+    width var(--dur, 280ms) var(--ease-in-out, ease),
+    height var(--dur, 280ms) var(--ease-in-out, ease),
+    margin var(--dur, 280ms) var(--ease-in-out, ease),
+    font-size var(--dur, 280ms) var(--ease-in-out, ease),
+    transform var(--dur, 280ms) var(--ease-in-out, ease),
+    opacity var(--dur, 280ms) var(--ease-in-out, ease);
 }
 
 .profile-name {
@@ -98,12 +122,28 @@
   letter-spacing: 0.06em;
   margin: 0 0 0.25rem;
   text-transform: uppercase;
+  transform: translateY(0);
+  max-height: 2.2rem;
+  overflow: hidden;
+  transition:
+    opacity var(--dur, 280ms) var(--ease-in-out, ease),
+    transform var(--dur, 280ms) var(--ease-in-out, ease),
+    max-height var(--dur, 280ms) var(--ease-in-out, ease),
+    margin var(--dur, 280ms) var(--ease-in-out, ease);
 }
 
 .profile-email {
   font-size: 0.72rem;
   opacity: 0.75;
   margin: 0 0 0.35rem;
+  transform: translateY(0);
+  max-height: 2rem;
+  overflow: hidden;
+  transition:
+    opacity var(--dur, 280ms) var(--ease-in-out, ease),
+    transform var(--dur, 280ms) var(--ease-in-out, ease),
+    max-height var(--dur, 280ms) var(--ease-in-out, ease),
+    margin var(--dur, 280ms) var(--ease-in-out, ease);
 }
 
 .profile-role {
@@ -114,6 +154,14 @@
   padding: 0.18rem 0.5rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.12);
+  transform: translateY(0);
+  max-height: 1.6rem;
+  overflow: hidden;
+  transition:
+    opacity var(--dur, 280ms) var(--ease-in-out, ease),
+    transform var(--dur, 280ms) var(--ease-in-out, ease),
+    max-height var(--dur, 280ms) var(--ease-in-out, ease),
+    margin var(--dur, 280ms) var(--ease-in-out, ease);
 }
 
 .sidebar-nav {
@@ -185,6 +233,12 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 220px;
+  transform: translateY(0);
+  transition:
+    max-width var(--dur, 280ms) var(--ease-in-out, ease),
+    opacity var(--dur, 280ms) var(--ease-in-out, ease),
+    transform var(--dur, 280ms) var(--ease-in-out, ease);
 }
 
 .sidebar-footer {
