@@ -319,6 +319,11 @@ thead .sticky-col {
     grid-template-columns: 1fr;
   }
 
+  .block-actions-row {
+    padding: 0.55rem 0.65rem;
+    gap: 0.55rem;
+  }
+
   .pagination-controls .btn-rgfm-page {
     min-width: 2.75rem;
     flex: 1;
