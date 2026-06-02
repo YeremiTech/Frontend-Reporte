@@ -26,6 +26,10 @@ export class ToastService {
     this.show('success', title, message);
   }
 
+  showSuccessTitle(title: string): void {
+    this.show('success', title, '');
+  }
+
   showError(err: unknown): void {
     const resolved = resolveApiError(err);
     this.show('danger', resolved.title, resolved.message, 5000);

@@ -23,11 +23,6 @@
     <div class="settings-card">
       <div class="settings-card__header">
         <h2 class="settings-card__title">{{ formTitle() }}</h2>
-        @if (isEditing()) {
-          <button type="button" class="btn btn-link btn-sm" (click)="cancelEdit()">
-            Cancelar edición
-          </button>
-        }
       </div>
       <form class="settings-form" (ngSubmit)="submitForm()">
         <label class="settings-field">
@@ -82,6 +77,11 @@
             <i [ngClass]="['bi', isEditing() ? 'bi-check-lg' : 'bi-person-plus-fill']" aria-hidden="true"></i>
             {{ submitLabel() }}
           </button>
+          @if (isEditing()) {
+            <button type="button" class="btn btn-rgfm-page btn-sm" (click)="cancelEdit()" [disabled]="submitting()">
+              Cancelar
+            </button>
+          }
         </div>
       </form>
     </div>

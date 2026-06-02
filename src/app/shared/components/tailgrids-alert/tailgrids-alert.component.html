@@ -15,7 +15,9 @@
 
   <div class="tg-alert__content">
     <p class="tg-alert__title">{{ title() }}</p>
-    <p class="tg-alert__message">{{ message() }}</p>
+    @if (message()) {
+      <p class="tg-alert__message">{{ message() }}</p>
+    }
   </div>
 
   @if (dismissible()) {

@@ -340,10 +340,7 @@ export class RgfmDashboardComponent {
 
         this.refreshFilterOptions();
 
-        this.toast.showSuccess(
-          'Vista previa',
-          `${result.rowsImported} filas`
-        );
+        this.toast.showSuccessTitle('Importado');
         this.importing.set(false);
         input.value = '';
       },
@@ -387,10 +384,7 @@ export class RgfmDashboardComponent {
             this.appViewSettings.setReportsLayout(persistedLayout.order, persistedLayout.hidden);
             this.refreshFilterOptions();
 
-            this.toast.showSuccess(
-              'Datos guardados',
-              `${result.rowsSaved} filas`
-            );
+            this.toast.showSuccessTitle('Guardado en la DB');
             this.saving.set(false);
           },
           error: () => {
@@ -405,10 +399,7 @@ export class RgfmDashboardComponent {
             this.applyColumnLayout(layout.order, layout.hidden, false);
             this.appViewSettings.setReportsLayout(layout.order, layout.hidden);
             this.refreshFilterOptions();
-            this.toast.showSuccess(
-              'Datos guardados',
-              `${result.rowsSaved} filas`
-            );
+            this.toast.showSuccessTitle('Guardado en la DB');
             this.saving.set(false);
           },
         });
@@ -525,7 +516,7 @@ export class RgfmDashboardComponent {
         anchor.click();
         URL.revokeObjectURL(url);
 
-        this.toast.showSuccess('Exportado', `${this.effectiveTotal()} filas · ${columns.length} columnas.`);
+        this.toast.showSuccessTitle('Exportado');
         this.exporting.set(false);
       },
       error: (err) => {
