@@ -2,16 +2,6 @@ import { Injectable, computed, signal } from '@angular/core';
 
 import type { ReportDatasetSnapshot } from '../models/chart.model';
 
-const STORAGE_KEY = 'comisiones_report_persisted';
-
-interface PersistedReportState {
-  rows: Record<string, string>[];
-  columns: string[];
-  sourceFileName: string;
-  columnOrder: string[];
-  hiddenColumns: string[];
-}
-
 export interface ReportImportPayload {
   rows: Record<string, string>[];
   columns: string[];
@@ -62,10 +52,6 @@ export class ReportDataStoreService {
     return { rows: this.persistedRows(), columns: this.persistedColumns() };
   });
 
-  constructor() {
-    this.restorePersistedFromSession();
-  }
-
   clear(): void {
     this.persistedRows.set([]);
     this.persistedColumns.set([]);
@@ -73,7 +59,6 @@ export class ReportDataStoreService {
     this.persistedColumnOrder.set([]);
     this.persistedHiddenColumns.set([]);
     this.clearPreview();
-    this.removeSession();
   }
 
   /** Vista previa tras importar Excel (aún no guardada en BD). */
@@ -100,7 +85,6 @@ export class ReportDataStoreService {
     this.persistedColumnOrder.set([...columnOrder]);
     this.persistedHiddenColumns.set([...hiddenColumns]);
     this.clearPreview();
-    this.persistToSession();
   }
 
   getPreviewForSave(): {
@@ -140,9 +124,6 @@ export class ReportDataStoreService {
     }
     this.persistedColumnOrder.set([...order]);
     this.persistedHiddenColumns.set(hidden);
-    if (this.hasPersistedData()) {
-      this.persistToSession();
-    }
   }
 
   private clearPreview(): void {
@@ -152,60 +133,5 @@ export class ReportDataStoreService {
     this.previewHeadersFound.set([]);
     this.previewColumnOrder.set([]);
     this.previewHiddenColumns.set([]);
-  }
-
-  private persistToSession(): void {
-    if (typeof sessionStorage === 'undefined' || !this.hasPersistedData()) {
-      return;
-    }
-
-    const state: PersistedReportState = {
-      rows: this.persistedRows(),
-      columns: this.persistedColumns(),
-      sourceFileName: this.persistedSourceFileName(),
-      columnOrder: this.persistedColumnOrder(),
-      hiddenColumns: this.persistedHiddenColumns(),
-    };
-
-    try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      /* Dataset demasiado grande para sessionStorage; se mantiene en memoria. */
-    }
-  }
-
-  private restorePersistedFromSession(): void {
-    if (typeof sessionStorage === 'undefined') {
-      return;
-    }
-
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return;
-    }
-
-    try {
-      const state = JSON.parse(raw) as PersistedReportState;
-      if (!Array.isArray(state.rows) || state.rows.length === 0) {
-        return;
-      }
-
-      this.persistedRows.set(state.rows);
-      this.persistedColumns.set(state.columns ?? []);
-      this.persistedSourceFileName.set(state.sourceFileName ?? '');
-      this.persistedColumnOrder.set(
-        state.columnOrder?.length ? state.columnOrder : (state.columns ?? [])
-      );
-      this.persistedHiddenColumns.set(state.hiddenColumns ?? []);
-    } catch {
-      this.removeSession();
-    }
-  }
-
-  private removeSession(): void {
-    if (typeof sessionStorage === 'undefined') {
-      return;
-    }
-    sessionStorage.removeItem(STORAGE_KEY);
   }
 }

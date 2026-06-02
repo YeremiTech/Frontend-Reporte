@@ -180,7 +180,8 @@ export class RgfmDashboardComponent {
   }
 
   private initializeView(): void {
-    if (this.reportDataStore.hasReportsData()) {
+    // Si hay una vista previa pendiente (importado pero no guardado), no pisar con datos de BD.
+    if (this.hasPendingSave()) {
       this.restoreLayoutFromStore();
       this.refreshFilterOptions();
       return;
@@ -369,23 +370,47 @@ export class RgfmDashboardComponent {
       next: (result) => {
         const layout = this.buildColumnLayoutFromHeaders(result.headersPersisted);
 
-        this.reportDataStore.loadPersisted({
-          rows: preview.rows,
-          columns: layout.order,
-          sourceFileName: result.sourceFileName || preview.sourceFileName,
-          columnOrder: layout.order,
-          hiddenColumns: [...layout.hidden],
+        // Guardado OK: recargar desde backend para evitar stale data del navegador.
+        this.rgfmApi.loadDataset().subscribe({
+          next: (dataset) => {
+            const persistedLayout = this.buildColumnLayoutFromHeaders(dataset.headers);
+            this.reportDataStore.loadPersisted({
+              rows: dataset.rows,
+              columns: persistedLayout.order,
+              sourceFileName: dataset.sourceFileName,
+              columnOrder: persistedLayout.order,
+              hiddenColumns: [...persistedLayout.hidden],
+            });
+
+            this.applyColumnLayout(persistedLayout.order, persistedLayout.hidden, false);
+            this.appViewSettings.setReportsLayout(persistedLayout.order, persistedLayout.hidden);
+            this.refreshFilterOptions();
+
+            this.toast.showSuccess(
+              'Datos guardados',
+              `${result.rowsSaved} filas en la base. Los datos anteriores fueron reemplazados. Disponible en Gráficos y Resumen.`
+            );
+            this.saving.set(false);
+          },
+          error: () => {
+            // Si falla la recarga, al menos mantenemos el preview ya guardado.
+            this.reportDataStore.loadPersisted({
+              rows: preview.rows,
+              columns: layout.order,
+              sourceFileName: result.sourceFileName || preview.sourceFileName,
+              columnOrder: layout.order,
+              hiddenColumns: [...layout.hidden],
+            });
+            this.applyColumnLayout(layout.order, layout.hidden, false);
+            this.appViewSettings.setReportsLayout(layout.order, layout.hidden);
+            this.refreshFilterOptions();
+            this.toast.showSuccess(
+              'Datos guardados',
+              `${result.rowsSaved} filas en la base. Los datos anteriores fueron reemplazados. Disponible en Gráficos y Resumen.`
+            );
+            this.saving.set(false);
+          },
         });
-
-        this.applyColumnLayout(layout.order, layout.hidden, false);
-        this.appViewSettings.setReportsLayout(layout.order, layout.hidden);
-        this.refreshFilterOptions();
-
-        this.toast.showSuccess(
-          'Datos guardados',
-          `${result.rowsSaved} filas en la base. Los datos anteriores fueron reemplazados. Disponible en Gráficos y Resumen.`
-        );
-        this.saving.set(false);
       },
       error: (err) => {
         this.toast.showError(err as ResolvedApiError);

@@ -20,7 +20,7 @@
           (focus)="prefetchRoute(item.route)"
           (click)="onNavigate()"
         >
-          <i class="bi" [class]="item.icon" aria-hidden="true"></i>
+          <i [class]="'bi ' + item.icon" aria-hidden="true"></i>
           <span class="nav-label">{{ item.label }}</span>
         </a>
       }
