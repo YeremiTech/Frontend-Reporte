@@ -63,7 +63,8 @@
   z-index: 1;
   width: 100%;
   max-width: 440px;
-  animation: login-card-float 5.5s ease-in-out infinite;
+  animation: login-card-float 7.25s ease-in-out infinite;
+  will-change: transform;
 }
 
 .login-card {
@@ -103,7 +104,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: login-brand-float 4s ease-in-out infinite;
+  animation: login-brand-float 5.5s ease-in-out infinite;
+  will-change: transform;
 
   img {
     display: block;
@@ -147,33 +149,33 @@
 @keyframes login-card-float {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
 
   50% {
-    transform: translateY(-12px);
+    transform: translate3d(0, -18px, 0);
   }
 }
 
 @keyframes login-brand-float {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
 
   50% {
-    transform: translateY(-4px);
+    transform: translate3d(0, -7px, 0);
   }
 }
 
 @keyframes login-orb-float {
   0%,
   100% {
-    transform: translate(0, 0) scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 
   50% {
-    transform: translate(8px, -14px) scale(1.04);
+    transform: translate3d(12px, -22px, 0) scale(1.05);
   }
 }
 
@@ -198,10 +200,6 @@
   .login-page {
     padding: calc(1rem + var(--safe-top)) 1rem calc(1rem + var(--safe-bottom));
     align-items: center;
-  }
-
-  .login-card-wrapper {
-    animation: none;
   }
 
   .login-page__orb--1 {
