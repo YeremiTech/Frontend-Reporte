@@ -56,7 +56,7 @@ export class RgfmDashboardComponent {
   private readonly appViewSettings = inject(AppViewSettingsService);
   protected readonly toast = inject(ToastService);
 
-  readonly canEdit = this.auth.canEditReports;
+  readonly canEdit = computed(() => this.auth.canEditReports());
 
   private lastAppliedViewRevision = -1;
   readonly pageSize = 50;
