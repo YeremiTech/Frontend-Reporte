@@ -27,14 +27,49 @@
   z-index: 1040;
   overflow: hidden;
   transition:
-    width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width var(--dur-slow, 420ms) var(--ease-in-out, cubic-bezier(0.4, 0, 0.2, 1)),
+    min-width var(--dur-slow, 420ms) var(--ease-in-out, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--dur-slow, 420ms) var(--ease-out, cubic-bezier(0.2, 0, 0, 1)),
+    opacity var(--dur, 280ms) var(--ease-out, cubic-bezier(0.2, 0, 0, 1));
+  will-change: width, transform, opacity;
 }
 
 .app-shell.sidebar-collapsed .sidebar {
+  /* Desktop: "rail" colapsado (solo íconos) */
+  width: 76px;
+  min-width: 76px;
+  transform: translateX(0);
+}
+
+.app-shell.sidebar-collapsed .sidebar-profile {
+  padding: 0.85rem 0.5rem 0.65rem;
+}
+
+.app-shell.sidebar-collapsed .avatar {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 0;
+  font-size: 1.25rem;
+}
+
+.app-shell.sidebar-collapsed .profile-name,
+.app-shell.sidebar-collapsed .profile-email,
+.app-shell.sidebar-collapsed .profile-role {
+  display: none;
+}
+
+.app-shell.sidebar-collapsed .nav-item {
+  justify-content: center;
+  gap: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.app-shell.sidebar-collapsed .nav-label {
   width: 0;
-  min-width: 0;
-  box-shadow: none;
+  opacity: 0;
+  margin: 0;
+  pointer-events: none;
 }
 
 .sidebar-profile {
@@ -201,6 +236,16 @@
 }
 
 @include bp.down(bp.$bp-lg) {
+  /* Mobile/Tablet: el sidebar sí se esconde por completo */
+  .app-shell.sidebar-collapsed .sidebar {
+    width: 0;
+    min-width: 0;
+    transform: translateX(-8px);
+    opacity: 0;
+    box-shadow: none;
+    pointer-events: none;
+  }
+
   .app-shell:not(.sidebar-collapsed) .sidebar {
     position: fixed;
     left: 0;
