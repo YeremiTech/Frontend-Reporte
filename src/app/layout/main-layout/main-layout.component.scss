@@ -41,19 +41,31 @@
 }
 
 .sidebar-profile {
+  text-align: center;
+  padding: 1.25rem 1rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
   overflow: hidden;
   transition:
-    padding var(--dur, 320ms) var(--ease-in-out, ease-in-out),
-    opacity var(--dur, 320ms) var(--ease-in-out, ease-in-out),
-    transform var(--dur, 320ms) var(--ease-in-out, ease-in-out);
+    padding var(--dur-slow, 380ms) var(--ease-in-out, ease-in-out),
+    opacity var(--dur, 320ms) var(--ease-in-out, ease-in-out);
 }
 
 .avatar {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 0.65rem;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #2a5080, #1a3a5a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
   transition:
-    width var(--dur, 320ms) var(--ease-in-out, ease-in-out),
-    height var(--dur, 320ms) var(--ease-in-out, ease-in-out),
-    margin var(--dur, 320ms) var(--ease-in-out, ease-in-out),
-    font-size var(--dur, 320ms) var(--ease-in-out, ease-in-out);
+    transform var(--dur-slow, 380ms) var(--ease-in-out, ease-in-out),
+    margin var(--dur-slow, 380ms) var(--ease-in-out, ease-in-out);
+  transform-origin: center center;
 }
 
 .profile-name,
@@ -84,15 +96,8 @@
   opacity: 1;
 }
 
-.app-shell.sidebar-collapsed .sidebar-profile {
-  /* Mantener altura/espaciado para evitar saltos del menú */
-  transform: translateY(0);
-}
-
 .app-shell.sidebar-collapsed .avatar {
-  /* Escala visual sin cambiar layout */
   transform: scale(0.78);
-  transform-origin: top center;
 }
 
 .app-shell.sidebar-collapsed .profile-name,
@@ -110,28 +115,6 @@
   transform: translateY(-4px);
   margin: 0;
   pointer-events: none;
-}
-
-/* Mantener padding del nav para estabilidad visual */
-
-.sidebar-profile {
-  text-align: center;
-  padding: 1.25rem 1rem 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  flex-shrink: 0;
-}
-
-.avatar {
-  width: 58px;
-  height: 58px;
-  margin: 0 auto 0.65rem;
-  border-radius: 50%;
-  background: linear-gradient(145deg, #2a5080, #1a3a5a);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.6rem;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
 
 .profile-name {
@@ -182,13 +165,17 @@
   position: relative;
   transition:
     background var(--dur-quick, 250ms) var(--ease-in-out, ease-in-out),
-    transform var(--dur-quick, 250ms) var(--ease-out, ease-out);
+    transform var(--dur-quick, 250ms) var(--ease-out, ease-out),
+    padding var(--dur-slow, 380ms) var(--ease-in-out, ease-in-out),
+    gap var(--dur-slow, 380ms) var(--ease-in-out, ease-in-out);
 
   i {
     font-size: 1.1rem;
     width: 1.3rem;
+    min-width: 1.3rem;
     text-align: center;
     flex-shrink: 0;
+    transition: transform var(--dur-slow, 380ms) var(--ease-in-out, ease-in-out);
   }
 
   &::after {
@@ -329,5 +316,17 @@
 
   .profile-email {
     font-size: 0.68rem;
+  }
+}
+
+/* Desktop: al colapsar, íconos y avatar se desplazan suavemente al centro del rail */
+@include bp.up(bp.$bp-lg) {
+  .app-shell.sidebar-collapsed .sidebar-profile {
+    padding-inline: calc((100% - 3.625rem) / 2);
+  }
+
+  .app-shell.sidebar-collapsed .nav-item {
+    gap: 0;
+    padding-inline: calc((100% - 1.3rem) / 2);
   }
 }
