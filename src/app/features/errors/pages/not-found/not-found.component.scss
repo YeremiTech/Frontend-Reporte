@@ -1,0 +1,72 @@
+@use '../../../../shared/styles/breakpoints' as bp;
+
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+.not-found-page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(1.5rem + var(--safe-top)) calc(1.5rem + var(--safe-right))
+    calc(1.5rem + var(--safe-bottom)) calc(1.5rem + var(--safe-left));
+  background: linear-gradient(135deg, #102a43 0%, #1a3a5a 45%, #2a5080 100%);
+}
+
+.not-found-page__card {
+  max-width: 28rem;
+  width: 100%;
+  padding: 2rem 1.75rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.97);
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.not-found-page__code {
+  margin: 0 0 0.5rem;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffaa49;
+}
+
+.not-found-page__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #102a43;
+}
+
+.not-found-page__text {
+  margin: 0 0 1.5rem;
+  color: #486581;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.not-found-page__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 12rem;
+  min-height: var(--touch-target-min, 44px);
+  text-decoration: none;
+}
+
+@include bp.down(bp.$bp-sm) {
+  .not-found-page__card {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .not-found-page__code {
+    font-size: 2.5rem;
+  }
+
+  .not-found-page__action {
+    width: 100%;
+    min-width: 0;
+  }
+}

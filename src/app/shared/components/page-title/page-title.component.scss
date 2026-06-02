@@ -1,3 +1,5 @@
+@use '../../styles/breakpoints' as bp;
+
 :host {
   display: block;
   height: 100%;
@@ -8,20 +10,22 @@
   margin: 0;
   height: 100%;
   box-sizing: border-box;
-  padding: 0 1.25rem 0 1rem;
+  padding: 0 1rem 0 0.65rem;
   background: linear-gradient(135deg, #1a3a5a 0%, #102a43 100%);
   color: #fff;
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(16, 42, 67, 0.18);
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
+  gap: 0.5rem;
 }
 
 .btn-title-menu {
   flex-shrink: 0;
-  width: 42px;
-  height: 42px;
-  margin-right: 0.75rem;
+  width: var(--touch-target-min, 44px);
+  height: var(--touch-target-min, 44px);
+  margin: 0;
   border: none;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.18);
@@ -47,22 +51,44 @@
 }
 
 .title-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  grid-column: 2;
   margin: 0;
-  font-size: 32px;
+  font-size: clamp(1rem, 4.2vw, 1.75rem);
   font-weight: 700;
   letter-spacing: 0.04em;
   line-height: 1.15;
   text-align: center;
   text-transform: uppercase;
-  pointer-events: none;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
-@media (max-width: 768px) {
+@include bp.up(bp.$bp-md) {
+  .block-title {
+    display: flex;
+    align-items: center;
+    padding: 0 1.25rem 0 1rem;
+  }
+
   .title-center {
-    font-size: 26px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 32px;
+    max-width: calc(100% - 7rem);
+    pointer-events: none;
+  }
+}
+
+@include bp.down(bp.$bp-sm) {
+  .block-title {
+    border-radius: 10px;
+  }
+
+  .title-center {
+    font-size: 0.95rem;
+    letter-spacing: 0.03em;
   }
 }

@@ -12,14 +12,14 @@ export const EMPTY_STATE_PRESETS = {
   resumen: {
     iconType: 'bootstrap',
     title: 'Sin datos para mostrar',
-    description: 'Importe un archivo Excel desde Reportes para ver el resumen por vendedor.',
+    description: 'Importe un Excel en Reportes y use Guardar para persistir los datos en la base.',
     buttonLabel: 'Ir a Reportes',
     actionRoute: '/',
   },
   graficos: {
     iconType: 'bootstrap',
     title: 'Sin datos para mostrar',
-    description: 'Importe un archivo Excel desde Reportes para generar gráficos.',
+    description: 'Importe un Excel en Reportes y use Guardar para persistir los datos en la base.',
     buttonLabel: 'Ir a Reportes',
     actionRoute: '/',
   },

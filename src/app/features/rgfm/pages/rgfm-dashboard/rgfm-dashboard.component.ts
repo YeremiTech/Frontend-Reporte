@@ -61,7 +61,9 @@ export class RgfmDashboardComponent {
     this.columnOrder().filter((header) => !this.hiddenColumns().has(header))
   );
 
-  readonly importedRows = computed(() => this.reportDataStore.snapshot()?.rows ?? []);
+  readonly hasPendingSave = this.reportDataStore.hasPendingSave;
+
+  readonly importedRows = computed(() => this.reportDataStore.reportsSnapshot()?.rows ?? []);
 
   readonly filteredRows = computed(() => {
     let rows = this.importedRows();
@@ -119,14 +121,20 @@ export class RgfmDashboardComponent {
   showColumnPanel = signal(false);
 
   importing = signal(false);
+  saving = signal(false);
   exporting = signal(false);
   loadingDataset = signal(false);
 
-  readonly showLoader = computed(() => this.importing() || this.exporting() || this.loadingDataset());
+  readonly showLoader = computed(
+    () => this.importing() || this.saving() || this.exporting() || this.loadingDataset()
+  );
 
   readonly loaderMessage = computed(() => {
     if (this.importing()) {
       return 'Importando...';
+    }
+    if (this.saving()) {
+      return 'Guardando...';
     }
     if (this.exporting()) {
       return 'Exportando...';
@@ -147,16 +155,16 @@ export class RgfmDashboardComponent {
   }
 
   private initializeView(): void {
-    if (this.reportDataStore.hasData()) {
+    if (this.reportDataStore.hasReportsData()) {
       this.restoreLayoutFromStore();
       this.refreshFilterOptions();
       return;
     }
 
-    this.loadDatasetFromBackend();
+    this.loadPersistedDatasetFromBackend();
   }
 
-  private loadDatasetFromBackend(): void {
+  private loadPersistedDatasetFromBackend(): void {
     this.loadingDataset.set(true);
 
     this.rgfmApi.loadDataset().subscribe({
@@ -170,7 +178,7 @@ export class RgfmDashboardComponent {
         const layout = this.buildImportedColumnLayout(dataset.headers);
         this.applyColumnLayout(layout.order, layout.hidden, false);
 
-        this.reportDataStore.loadFromImport({
+        this.reportDataStore.loadPersisted({
           rows: dataset.rows,
           columns: layout.order,
           sourceFileName: dataset.sourceFileName,
@@ -271,45 +279,76 @@ export class RgfmDashboardComponent {
     this.importing.set(true);
     this.toast.dismiss();
 
-    this.rgfmApi.importAndSave(file!).subscribe({
+    this.rgfmApi.importExcel(file!).subscribe({
       next: (result) => {
-        const layout = this.buildImportedColumnLayout(result.headersPersisted);
+        const layout = this.buildImportedColumnLayout(result.headersFound);
 
         this.filterMes.set('');
         this.filterVendedor.set('');
         this.page.set(0);
         this.applyColumnLayout(layout.order, layout.hidden, false);
 
-        this.rgfmApi.loadDataset().subscribe({
-          next: (dataset) => {
-            this.reportDataStore.loadFromImport({
-              rows: dataset.rows,
-              columns: layout.order,
-              sourceFileName: result.sourceFileName || file!.name,
-              columnOrder: layout.order,
-              hiddenColumns: [...layout.hidden],
-            });
-
-            this.refreshFilterOptions();
-
-            this.toast.showSuccess(
-              'Excel guardado',
-              `${result.rowsSaved} filas · ${result.headersPersisted.length} columnas. Disponible en Reportes, Gráficos y Resumen.`
-            );
-            this.importing.set(false);
-            input.value = '';
+        this.reportDataStore.loadPreview(
+          {
+            rows: result.rows,
+            columns: layout.order,
+            sourceFileName: file!.name,
+            columnOrder: layout.order,
+            hiddenColumns: [...layout.hidden],
           },
-          error: (err) => {
-            this.toast.showError(err as ResolvedApiError);
-            this.importing.set(false);
-            input.value = '';
-          },
-        });
+          result.headersFound
+        );
+
+        this.refreshFilterOptions();
+
+        this.toast.showSuccess(
+          'Vista previa cargada',
+          `${result.rowsImported} filas listas. Use Guardar para persistir en la base de datos.`
+        );
+        this.importing.set(false);
+        input.value = '';
       },
       error: (err) => {
         this.toast.showError(err as ResolvedApiError);
         this.importing.set(false);
         input.value = '';
+      },
+    });
+  }
+
+  saveToDatabase(): void {
+    const preview = this.reportDataStore.getPreviewForSave();
+    if (!preview) {
+      return;
+    }
+
+    this.saving.set(true);
+    this.toast.dismiss();
+
+    this.rgfmApi.saveImport(preview).subscribe({
+      next: (result) => {
+        const layout = this.buildImportedColumnLayout(result.headersPersisted);
+
+        this.reportDataStore.loadPersisted({
+          rows: preview.rows,
+          columns: layout.order,
+          sourceFileName: result.sourceFileName || preview.sourceFileName,
+          columnOrder: layout.order,
+          hiddenColumns: [...layout.hidden],
+        });
+
+        this.applyColumnLayout(layout.order, layout.hidden, false);
+        this.refreshFilterOptions();
+
+        this.toast.showSuccess(
+          'Datos guardados',
+          `${result.rowsSaved} filas en la base. Los datos anteriores fueron reemplazados. Disponible en Gráficos y Resumen.`
+        );
+        this.saving.set(false);
+      },
+      error: (err) => {
+        this.toast.showError(err as ResolvedApiError);
+        this.saving.set(false);
       },
     });
   }

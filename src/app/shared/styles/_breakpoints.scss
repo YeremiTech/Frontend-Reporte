@@ -1,0 +1,22 @@
+$bp-sm: 576px;
+$bp-md: 768px;
+$bp-lg: 992px;
+$bp-xl: 1200px;
+
+@mixin down($max) {
+  @media (max-width: ($max - 0.02px)) {
+    @content;
+  }
+}
+
+@mixin up($min) {
+  @media (min-width: $min) {
+    @content;
+  }
+}
+
+@mixin between($min, $max) {
+  @media (min-width: $min) and (max-width: ($max - 0.02px)) {
+    @content;
+  }
+}

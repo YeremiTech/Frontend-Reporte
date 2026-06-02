@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type {
   ChartAggregation,
@@ -7,7 +15,9 @@ import type {
   ColumnMeta,
 } from '../../../../core/models/chart.model';
 import { ChartAnalyticsService } from '../../../../core/services/chart-analytics.service';
+import { RgfmApiService } from '../../../../core/services/api.service';
 import { ReportDataStoreService } from '../../../../core/services/report-data-store.service';
+import { uniqueImportHeaders } from '../../../../core/models/rgfm.model';
 import { ApexChartComponent } from '../../../../shared/components/apex-chart/apex-chart.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { EMPTY_STATE_PRESETS } from '../../../../shared/components/empty-state/empty-state.presets';
@@ -47,13 +57,15 @@ export class ChartsDashboardComponent {
 
   private readonly dataStore = inject(ReportDataStoreService);
   private readonly analytics = inject(ChartAnalyticsService);
+  private readonly rgfmApi = inject(RgfmApiService);
 
-  readonly hasData = this.dataStore.hasData;
+  readonly hasData = this.dataStore.hasPersistedData;
+
   readonly topNDraft = signal(12);
   private topNDebounceId: ReturnType<typeof setTimeout> | null = null;
 
   readonly columnMeta = computed(() => {
-    const snap = this.dataStore.snapshot();
+    const snap = this.dataStore.persistedSnapshot();
     if (!snap) {
       return [] as ColumnMeta[];
     }
@@ -86,13 +98,13 @@ export class ChartsDashboardComponent {
   private lastColumnSignature = '';
 
   readonly hasAnyChart = computed(() => {
-    const snap = this.dataStore.snapshot();
+    const snap = this.dataStore.persistedSnapshot();
     const cfg = this.config();
     return !!snap && !!cfg.categoryColumn;
   });
 
   readonly chartOptionsByKind = computed(() => {
-    const snap = this.dataStore.snapshot();
+    const snap = this.dataStore.persistedSnapshot();
     const cfg = this.config();
     const map = new Map<ChartKind, ChartOptions | null>();
 
@@ -137,12 +149,14 @@ export class ChartsDashboardComponent {
   }
 
   constructor() {
+    afterNextRender(() => this.ensurePersistedDataset());
+
     effect(() => {
       this.topNDraft.set(this.config().topN);
     });
 
     effect(() => {
-      const snap = this.dataStore.snapshot();
+      const snap = this.dataStore.persistedSnapshot();
       const categories = this.categoryColumns();
       const values = this.valueColumns();
 
@@ -186,6 +200,29 @@ export class ChartsDashboardComponent {
         valueColumn: valueValid ? current.valueColumn : firstValue,
         aggregation: valueValid && current.valueColumn ? current.aggregation : firstValue ? 'sum' : 'count',
       });
+    });
+  }
+
+  private ensurePersistedDataset(): void {
+    if (this.dataStore.hasPersistedData()) {
+      return;
+    }
+
+    this.rgfmApi.loadDataset().subscribe({
+      next: (dataset) => {
+        if (dataset.total === 0 || dataset.rows.length === 0) {
+          return;
+        }
+
+        const headers = uniqueImportHeaders(dataset.headers);
+        this.dataStore.loadPersisted({
+          rows: dataset.rows,
+          columns: headers,
+          sourceFileName: dataset.sourceFileName,
+          columnOrder: headers,
+          hiddenColumns: [],
+        });
+      },
     });
   }
 

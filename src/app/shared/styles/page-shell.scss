@@ -1,3 +1,5 @@
+@use './breakpoints' as bp;
+
 /** Altura fija del bloque título (igual en Reportes, Resumen, Gráficos). */
 :root {
   --page-title-height: 68px;
@@ -5,6 +7,23 @@
   --page-body-padding-x: 0.35rem;
   --page-body-padding-bottom: 0.5rem;
   --empty-state-panel-min-height: 17.5rem;
+}
+
+@include bp.down(bp.$bp-md) {
+  :root {
+    --page-title-height: 60px;
+    --page-block-gap: 0.5rem;
+    --page-body-padding-x: 0.25rem;
+    --page-body-padding-bottom: 0.4rem;
+    --empty-state-panel-min-height: 14rem;
+  }
+}
+
+@include bp.down(bp.$bp-sm) {
+  :root {
+    --page-title-height: 56px;
+    --page-body-padding-x: 0.15rem;
+  }
 }
 
 .page-shell-host {

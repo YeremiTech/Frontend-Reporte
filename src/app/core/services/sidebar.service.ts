@@ -4,6 +4,10 @@ import { Injectable, signal } from '@angular/core';
 export class SidebarService {
   readonly collapsed = signal(this.initialCollapsed());
 
+  constructor() {
+    this.attachResizeListener();
+  }
+
   toggle(): void {
     this.collapsed.update((value) => !value);
   }
@@ -20,6 +24,28 @@ export class SidebarService {
     if (typeof globalThis.window === 'undefined') {
       return true;
     }
+    return this.isMobileViewport();
+  }
+
+  private attachResizeListener(): void {
+    if (typeof globalThis.window === 'undefined') {
+      return;
+    }
+
+    globalThis.window.addEventListener(
+      'resize',
+      () => {
+        if (this.isMobileViewport()) {
+          this.collapse();
+        } else {
+          this.expand();
+        }
+      },
+      { passive: true }
+    );
+  }
+
+  private isMobileViewport(): boolean {
     return globalThis.window.innerWidth < 992;
   }
 }

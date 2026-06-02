@@ -2,7 +2,7 @@ import { Injectable, computed, signal } from '@angular/core';
 
 import type { ReportDatasetSnapshot } from '../models/chart.model';
 
-const STORAGE_KEY = 'comisiones_report_session';
+const STORAGE_KEY = 'comisiones_report_persisted';
 
 interface PersistedReportState {
   rows: Record<string, string>[];
@@ -22,77 +22,149 @@ export interface ReportImportPayload {
 
 @Injectable({ providedIn: 'root' })
 export class ReportDataStoreService {
-  private readonly rowsSignal = signal<Record<string, string>[]>([]);
-  private readonly columnsSignal = signal<string[]>([]);
-  private readonly sourceFileNameSignal = signal('');
-  private readonly columnOrderSignal = signal<string[]>([]);
-  private readonly hiddenColumnsSignal = signal<string[]>([]);
+  private readonly persistedRows = signal<Record<string, string>[]>([]);
+  private readonly persistedColumns = signal<string[]>([]);
+  private readonly persistedSourceFileName = signal('');
+  private readonly persistedColumnOrder = signal<string[]>([]);
+  private readonly persistedHiddenColumns = signal<string[]>([]);
 
-  readonly hasData = computed(() => this.rowsSignal().length > 0);
-  readonly sourceFileName = this.sourceFileNameSignal.asReadonly();
+  private readonly previewRows = signal<Record<string, string>[]>([]);
+  private readonly previewColumns = signal<string[]>([]);
+  private readonly previewSourceFileName = signal('');
+  private readonly previewHeadersFound = signal<string[]>([]);
+  private readonly previewColumnOrder = signal<string[]>([]);
+  private readonly previewHiddenColumns = signal<string[]>([]);
 
-  readonly snapshot = computed((): ReportDatasetSnapshot | null => {
-    if (!this.hasData()) {
+  readonly hasPendingSave = computed(() => this.previewRows().length > 0);
+  readonly hasPersistedData = computed(() => this.persistedRows().length > 0);
+  readonly hasReportsData = computed(() => this.hasPendingSave() || this.hasPersistedData());
+
+  readonly sourceFileName = computed(() =>
+    this.hasPendingSave() ? this.previewSourceFileName() : this.persistedSourceFileName()
+  );
+
+  /** Vista Reportes: vista previa si existe; si no, datos guardados en BD. */
+  readonly reportsSnapshot = computed((): ReportDatasetSnapshot | null => {
+    if (this.previewRows().length > 0) {
+      return { rows: this.previewRows(), columns: this.previewColumns() };
+    }
+    if (this.persistedRows().length > 0) {
+      return { rows: this.persistedRows(), columns: this.persistedColumns() };
+    }
+    return null;
+  });
+
+  /** Gráficos y Resumen: solo datos persistidos en BD. */
+  readonly persistedSnapshot = computed((): ReportDatasetSnapshot | null => {
+    if (this.persistedRows().length === 0) {
       return null;
     }
-    return {
-      rows: this.rowsSignal(),
-      columns: this.columnsSignal(),
-    };
+    return { rows: this.persistedRows(), columns: this.persistedColumns() };
   });
 
   constructor() {
-    this.restoreFromSession();
+    this.restorePersistedFromSession();
   }
 
   clear(): void {
-    this.rowsSignal.set([]);
-    this.columnsSignal.set([]);
-    this.sourceFileNameSignal.set('');
-    this.columnOrderSignal.set([]);
-    this.hiddenColumnsSignal.set([]);
+    this.persistedRows.set([]);
+    this.persistedColumns.set([]);
+    this.persistedSourceFileName.set('');
+    this.persistedColumnOrder.set([]);
+    this.persistedHiddenColumns.set([]);
+    this.clearPreview();
     this.removeSession();
   }
 
-  /** Reemplaza el dataset completo (nueva importación). */
-  loadFromImport(payload: ReportImportPayload): void {
+  /** Vista previa tras importar Excel (aún no guardada en BD). */
+  loadPreview(payload: ReportImportPayload, headersFound: string[]): void {
     const columnOrder = payload.columnOrder?.length ? payload.columnOrder : payload.columns;
     const hiddenColumns = payload.hiddenColumns ?? [];
 
-    this.rowsSignal.set([...payload.rows]);
-    this.columnsSignal.set([...payload.columns]);
-    this.sourceFileNameSignal.set(payload.sourceFileName ?? '');
-    this.columnOrderSignal.set([...columnOrder]);
-    this.hiddenColumnsSignal.set([...hiddenColumns]);
+    this.previewRows.set([...payload.rows]);
+    this.previewColumns.set([...payload.columns]);
+    this.previewSourceFileName.set(payload.sourceFileName ?? '');
+    this.previewHeadersFound.set([...headersFound]);
+    this.previewColumnOrder.set([...columnOrder]);
+    this.previewHiddenColumns.set([...hiddenColumns]);
+  }
+
+  /** Datos cargados desde la BD (GET /dataset o tras guardar importación). */
+  loadPersisted(payload: ReportImportPayload): void {
+    const columnOrder = payload.columnOrder?.length ? payload.columnOrder : payload.columns;
+    const hiddenColumns = payload.hiddenColumns ?? [];
+
+    this.persistedRows.set([...payload.rows]);
+    this.persistedColumns.set([...payload.columns]);
+    this.persistedSourceFileName.set(payload.sourceFileName ?? '');
+    this.persistedColumnOrder.set([...columnOrder]);
+    this.persistedHiddenColumns.set([...hiddenColumns]);
+    this.clearPreview();
     this.persistToSession();
   }
 
-  getColumnLayout(): { order: string[]; hiddenColumns: string[] } {
+  getPreviewForSave(): {
+    rows: Record<string, string>[];
+    sourceFileName: string;
+    headersFound: string[];
+  } | null {
+    if (!this.hasPendingSave()) {
+      return null;
+    }
     return {
-      order: this.columnOrderSignal(),
-      hiddenColumns: this.hiddenColumnsSignal(),
+      rows: this.previewRows(),
+      sourceFileName: this.previewSourceFileName(),
+      headersFound: this.previewHeadersFound(),
+    };
+  }
+
+  getColumnLayout(): { order: string[]; hiddenColumns: string[] } {
+    if (this.hasPendingSave()) {
+      return {
+        order: this.previewColumnOrder(),
+        hiddenColumns: this.previewHiddenColumns(),
+      };
+    }
+    return {
+      order: this.persistedColumnOrder(),
+      hiddenColumns: this.persistedHiddenColumns(),
     };
   }
 
   setColumnLayout(order: string[], hiddenColumns: Iterable<string>): void {
-    this.columnOrderSignal.set([...order]);
-    this.hiddenColumnsSignal.set([...hiddenColumns]);
-    if (this.hasData()) {
+    const hidden = [...hiddenColumns];
+    if (this.hasPendingSave()) {
+      this.previewColumnOrder.set([...order]);
+      this.previewHiddenColumns.set(hidden);
+      return;
+    }
+    this.persistedColumnOrder.set([...order]);
+    this.persistedHiddenColumns.set(hidden);
+    if (this.hasPersistedData()) {
       this.persistToSession();
     }
   }
 
+  private clearPreview(): void {
+    this.previewRows.set([]);
+    this.previewColumns.set([]);
+    this.previewSourceFileName.set('');
+    this.previewHeadersFound.set([]);
+    this.previewColumnOrder.set([]);
+    this.previewHiddenColumns.set([]);
+  }
+
   private persistToSession(): void {
-    if (typeof sessionStorage === 'undefined' || !this.hasData()) {
+    if (typeof sessionStorage === 'undefined' || !this.hasPersistedData()) {
       return;
     }
 
     const state: PersistedReportState = {
-      rows: this.rowsSignal(),
-      columns: this.columnsSignal(),
-      sourceFileName: this.sourceFileNameSignal(),
-      columnOrder: this.columnOrderSignal(),
-      hiddenColumns: this.hiddenColumnsSignal(),
+      rows: this.persistedRows(),
+      columns: this.persistedColumns(),
+      sourceFileName: this.persistedSourceFileName(),
+      columnOrder: this.persistedColumnOrder(),
+      hiddenColumns: this.persistedHiddenColumns(),
     };
 
     try {
@@ -102,7 +174,7 @@ export class ReportDataStoreService {
     }
   }
 
-  private restoreFromSession(): void {
+  private restorePersistedFromSession(): void {
     if (typeof sessionStorage === 'undefined') {
       return;
     }
@@ -118,13 +190,13 @@ export class ReportDataStoreService {
         return;
       }
 
-      this.rowsSignal.set(state.rows);
-      this.columnsSignal.set(state.columns ?? []);
-      this.sourceFileNameSignal.set(state.sourceFileName ?? '');
-      this.columnOrderSignal.set(
+      this.persistedRows.set(state.rows);
+      this.persistedColumns.set(state.columns ?? []);
+      this.persistedSourceFileName.set(state.sourceFileName ?? '');
+      this.persistedColumnOrder.set(
         state.columnOrder?.length ? state.columnOrder : (state.columns ?? [])
       );
-      this.hiddenColumnsSignal.set(state.hiddenColumns ?? []);
+      this.persistedHiddenColumns.set(state.hiddenColumns ?? []);
     } catch {
       this.removeSession();
     }

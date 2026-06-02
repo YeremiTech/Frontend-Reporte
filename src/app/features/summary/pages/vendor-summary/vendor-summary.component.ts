@@ -1,5 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { RgfmApiService } from '../../../../core/services/api.service';
 import { ReportDataStoreService } from '../../../../core/services/report-data-store.service';
+import { uniqueImportHeaders } from '../../../../core/models/rgfm.model';
 import { VendorSummaryService } from '../../../../core/services/vendor-summary.service';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { EMPTY_STATE_PRESETS } from '../../../../shared/components/empty-state/empty-state.presets';
@@ -18,15 +27,43 @@ export class VendorSummaryComponent {
 
   readonly dataStore = inject(ReportDataStoreService);
   private readonly vendorReport = inject(VendorSummaryService);
+  private readonly rgfmApi = inject(RgfmApiService);
 
-  readonly hasData = this.dataStore.hasData;
+  readonly hasData = this.dataStore.hasPersistedData;
+
+  constructor() {
+    afterNextRender(() => this.ensurePersistedDataset());
+  }
+
+  private ensurePersistedDataset(): void {
+    if (this.dataStore.hasPersistedData()) {
+      return;
+    }
+
+    this.rgfmApi.loadDataset().subscribe({
+      next: (dataset) => {
+        if (dataset.total === 0 || dataset.rows.length === 0) {
+          return;
+        }
+
+        const headers = uniqueImportHeaders(dataset.headers);
+        this.dataStore.loadPersisted({
+          rows: dataset.rows,
+          columns: headers,
+          sourceFileName: dataset.sourceFileName,
+          columnOrder: headers,
+          hiddenColumns: [],
+        });
+      },
+    });
+  }
 
   /** Vendedores completos por página (evita cortar un bloque y romper rowspan). */
   readonly vendorsPerPage = 8;
   readonly page = signal(0);
 
   readonly report = computed(() => {
-    const snap = this.dataStore.snapshot();
+    const snap = this.dataStore.persistedSnapshot();
     if (!snap) {
       return null;
     }

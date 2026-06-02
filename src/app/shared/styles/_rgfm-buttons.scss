@@ -1,3 +1,5 @@
+@use './breakpoints' as bp;
+
 /* Botones RGFM: estilos completos (no dependen solo de variables Bootstrap diferidas). */
 
 @mixin rgfm-btn-base {
@@ -151,5 +153,23 @@
     min-width: 1rem;
     text-align: center;
     vertical-align: -0.125em;
+  }
+}
+
+@include bp.down(bp.$bp-md) {
+  .btn.btn-rgfm-primary {
+    min-height: var(--touch-target-min, 44px);
+
+    &.btn-sm {
+      min-height: var(--touch-target-min, 44px);
+    }
+  }
+
+  .btn.btn-rgfm-page {
+    min-height: var(--touch-target-min, 44px);
+
+    &.btn-sm {
+      min-height: var(--touch-target-min, 44px);
+    }
   }
 }

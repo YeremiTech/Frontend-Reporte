@@ -67,6 +67,17 @@
           <i class="bi bi-upload me-1"></i>
           Importar
         </button>
+        @if (hasPendingSave()) {
+          <button
+            type="button"
+            class="btn btn-rgfm-primary btn-sm"
+            (click)="saveToDatabase()"
+            [disabled]="saving() || importing()"
+          >
+            <i class="bi bi-database-fill-check me-1"></i>
+            Guardar
+          </button>
+        }
         <button
           type="button"
           class="btn btn-rgfm-primary btn-sm"
@@ -132,7 +143,7 @@
               @if (effectiveTotal() === 0) {
                 <tr>
                   <td [attr.colspan]="displayColumns().length + 1" class="empty-row">
-                    No hay datos. Use <strong>Importar</strong> para cargar un Excel.
+                    No hay datos. Use <strong>Importar</strong> y luego <strong>Guardar</strong> para persistir en la base.
                   </td>
                 </tr>
               } @else {

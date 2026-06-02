@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthResponse, LoginRequest } from '../models/auth.model';
 import { ImportResult } from '../models/rgfm.model';
@@ -44,20 +44,23 @@ export class RgfmApiService {
       .pipe(catchError((err) => throwError(() => mapHttpError(err))));
   }
 
-  importAndSave(file: File): Observable<SaveImportResult> {
+  importExcel(file: File): Observable<ImportResult> {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.http.post<ImportResult>(`${this.baseUrl}/import`, formData).pipe(
-      switchMap((importResult) =>
-        this.http.post<SaveImportResult>(`${this.baseUrl}/save-import`, {
-          sourceFileName: file.name,
-          headersFound: importResult.headersFound,
-          rows: importResult.rows,
-        })
-      ),
-      catchError((err) => throwError(() => mapHttpError(err)))
-    );
+    return this.http
+      .post<ImportResult>(`${this.baseUrl}/import`, formData)
+      .pipe(catchError((err) => throwError(() => mapHttpError(err))));
+  }
+
+  saveImport(payload: {
+    sourceFileName: string;
+    headersFound: string[];
+    rows: Record<string, string>[];
+  }): Observable<SaveImportResult> {
+    return this.http
+      .post<SaveImportResult>(`${this.baseUrl}/save-import`, payload)
+      .pipe(catchError((err) => throwError(() => mapHttpError(err))));
   }
 
   exportExcel(columns: string[], mes?: string, vendedor?: string): Observable<{ blob: Blob; filename: string }> {
