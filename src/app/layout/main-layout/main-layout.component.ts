@@ -4,6 +4,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { filter, Subscription } from 'rxjs';
 import { AppViewSettingsService } from '../../core/services/app-view-settings.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PresenceApiService } from '../../core/services/api.service';
 import { SidebarService } from '../../core/services/sidebar.service';
 import { prefetchRouteChunk } from '../../core/utils/route-prefetch';
 
@@ -26,9 +27,11 @@ export class MainLayoutComponent implements OnDestroy {
   readonly sidebar = inject(SidebarService);
   private readonly router = inject(Router);
   private readonly viewSettings = inject(AppViewSettingsService);
+  private readonly presenceApi = inject(PresenceApiService);
 
   private routerSub?: Subscription;
   private refreshIntervalId?: ReturnType<typeof setInterval>;
+  private presenceIntervalId?: ReturnType<typeof setInterval>;
 
   private readonly baseNavItems: NavItem[] = [
     { label: 'Reportes', route: '/', icon: 'bi-grid-1x2-fill' },
@@ -76,6 +79,16 @@ export class MainLayoutComponent implements OnDestroy {
           }
           this.viewSettings.refreshIfNewer().subscribe();
         }, 5_000);
+
+        this.presenceIntervalId = globalThis.window.setInterval(() => {
+          if (!this.auth.isAuthenticated()) {
+            return;
+          }
+          if (typeof document !== 'undefined' && document.hidden) {
+            return;
+          }
+          this.presenceApi.ping().subscribe({ error: () => undefined });
+        }, 30_000);
       }
     });
   }
@@ -84,6 +97,9 @@ export class MainLayoutComponent implements OnDestroy {
     this.routerSub?.unsubscribe();
     if (this.refreshIntervalId != null && typeof globalThis.window !== 'undefined') {
       globalThis.window.clearInterval(this.refreshIntervalId);
+    }
+    if (this.presenceIntervalId != null && typeof globalThis.window !== 'undefined') {
+      globalThis.window.clearInterval(this.presenceIntervalId);
     }
   }
 

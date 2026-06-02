@@ -7,6 +7,8 @@ export interface UsuarioSummary {
   role: AppRole;
   active: boolean;
   createdAt: string;
+  lastSeenAt?: string | null;
+  online?: boolean;
 }
 
 export interface CreateUsuarioRequest {

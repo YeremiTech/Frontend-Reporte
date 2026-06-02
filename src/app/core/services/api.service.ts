@@ -150,3 +150,14 @@ export class AuthApiService {
       .pipe(catchError((err) => throwError(() => mapHttpError(err))));
   }
 }
+
+@Injectable({ providedIn: 'root' })
+export class PresenceApiService {
+  private readonly http = inject(HttpClient);
+
+  ping(): Observable<{ ok: boolean }> {
+    return this.http
+      .post<{ ok: boolean }>(`${environment.apiUrl}/api/presence/ping`, {})
+      .pipe(catchError((err) => throwError(() => mapHttpError(err))));
+  }
+}
