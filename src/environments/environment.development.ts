@@ -1,8 +1,4 @@
 export const environment = {
   production: false,
-  auth: {
-    username: 'Admin',
-    password: 'Admin',
-    role: 'ADMIN',
-  },
+  apiUrl: 'http://localhost:8090',
 };

@@ -1,8 +1,5 @@
 export const environment = {
   production: true,
-  auth: {
-    username: 'Admin',
-    password: 'Admin',
-    role: 'ADMIN',
-  },
+  /** Actualizar con la URL de tu Web Service en Render tras desplegar el backend. */
+  apiUrl: 'https://backend-reporte.onrender.com',
 };

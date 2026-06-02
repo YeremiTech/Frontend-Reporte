@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiErrorCode } from '../../../../core/constants';
-import { ExcelImportService } from '../../../../core/services/excel-import.service';
+import { RgfmApiService } from '../../../../core/services/api.service';
 import { resolvedError } from '../../../../core/utils/api-error.resolver';
 import { validateImportFile } from '../../../../core/utils/validate-import-file';
 import { ReportDataStoreService } from '../../../../core/services/report-data-store.service';
@@ -47,7 +47,7 @@ export interface RenderedTableRow {
 export class RgfmDashboardComponent {
   @ViewChild('fileInput') fileInputRef!: ElementRef<HTMLInputElement>;
 
-  private readonly excelImport = inject(ExcelImportService);
+  private readonly rgfmApi = inject(RgfmApiService);
   private readonly reportDataStore = inject(ReportDataStoreService);
   protected readonly toast = inject(ToastService);
   readonly pageSize = 50;
@@ -120,8 +120,9 @@ export class RgfmDashboardComponent {
 
   importing = signal(false);
   exporting = signal(false);
+  loadingDataset = signal(false);
 
-  readonly showLoader = computed(() => this.importing() || this.exporting());
+  readonly showLoader = computed(() => this.importing() || this.exporting() || this.loadingDataset());
 
   readonly loaderMessage = computed(() => {
     if (this.importing()) {
@@ -129,6 +130,9 @@ export class RgfmDashboardComponent {
     }
     if (this.exporting()) {
       return 'Exportando...';
+    }
+    if (this.loadingDataset()) {
+      return 'Cargando datos...';
     }
     return 'Cargando...';
   });
@@ -148,7 +152,40 @@ export class RgfmDashboardComponent {
       this.refreshFilterOptions();
       return;
     }
-    this.initializeColumnLayout();
+
+    this.loadDatasetFromBackend();
+  }
+
+  private loadDatasetFromBackend(): void {
+    this.loadingDataset.set(true);
+
+    this.rgfmApi.loadDataset().subscribe({
+      next: (dataset) => {
+        if (dataset.total === 0 || dataset.rows.length === 0) {
+          this.initializeColumnLayout();
+          this.loadingDataset.set(false);
+          return;
+        }
+
+        const layout = this.buildImportedColumnLayout(dataset.headers);
+        this.applyColumnLayout(layout.order, layout.hidden, false);
+
+        this.reportDataStore.loadFromImport({
+          rows: dataset.rows,
+          columns: layout.order,
+          sourceFileName: dataset.sourceFileName,
+          columnOrder: layout.order,
+          hiddenColumns: [...layout.hidden],
+        });
+
+        this.refreshFilterOptions();
+        this.loadingDataset.set(false);
+      },
+      error: () => {
+        this.initializeColumnLayout();
+        this.loadingDataset.set(false);
+      },
+    });
   }
 
   private initializeColumnLayout(): void {
@@ -221,7 +258,7 @@ export class RgfmDashboardComponent {
     this.fileInputRef?.nativeElement.click();
   }
 
-  async onFileSelected(event: Event): Promise<void> {
+  onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     const validationError = validateImportFile(file);
@@ -234,35 +271,47 @@ export class RgfmDashboardComponent {
     this.importing.set(true);
     this.toast.dismiss();
 
-    try {
-      const result = await this.excelImport.parseFile(file!);
-      const layout = this.buildImportedColumnLayout(result.headersFound);
+    this.rgfmApi.importAndSave(file!).subscribe({
+      next: (result) => {
+        const layout = this.buildImportedColumnLayout(result.headersPersisted);
 
-      this.filterMes.set('');
-      this.filterVendedor.set('');
-      this.page.set(0);
-      this.applyColumnLayout(layout.order, layout.hidden, false);
+        this.filterMes.set('');
+        this.filterVendedor.set('');
+        this.page.set(0);
+        this.applyColumnLayout(layout.order, layout.hidden, false);
 
-      this.reportDataStore.loadFromImport({
-        rows: result.rows ?? [],
-        columns: layout.order,
-        sourceFileName: file!.name,
-        columnOrder: layout.order,
-        hiddenColumns: [...layout.hidden],
-      });
+        this.rgfmApi.loadDataset().subscribe({
+          next: (dataset) => {
+            this.reportDataStore.loadFromImport({
+              rows: dataset.rows,
+              columns: layout.order,
+              sourceFileName: result.sourceFileName || file!.name,
+              columnOrder: layout.order,
+              hiddenColumns: [...layout.hidden],
+            });
 
-      this.refreshFilterOptions();
+            this.refreshFilterOptions();
 
-      this.toast.showSuccess(
-        'Excel cargado',
-        `${result.rowsImported} filas · ${result.headersFound.length} columnas. Disponible en Reportes, Gráficos y Resumen.`
-      );
-    } catch (err) {
-      this.toast.showError(err as ResolvedApiError);
-    } finally {
-      this.importing.set(false);
-      input.value = '';
-    }
+            this.toast.showSuccess(
+              'Excel guardado',
+              `${result.rowsSaved} filas · ${result.headersPersisted.length} columnas. Disponible en Reportes, Gráficos y Resumen.`
+            );
+            this.importing.set(false);
+            input.value = '';
+          },
+          error: (err) => {
+            this.toast.showError(err as ResolvedApiError);
+            this.importing.set(false);
+            input.value = '';
+          },
+        });
+      },
+      error: (err) => {
+        this.toast.showError(err as ResolvedApiError);
+        this.importing.set(false);
+        input.value = '';
+      },
+    });
   }
 
   private buildImportedColumnLayout(headersFound: string[]): { order: string[]; hidden: Set<string> } {
@@ -346,22 +395,26 @@ export class RgfmDashboardComponent {
     this.exporting.set(true);
     this.toast.dismiss();
 
-    const rows = this.filteredRows();
-    const baseName =
-      this.reportDataStore.sourceFileName().replace(/\.(xlsx|xls)$/i, '') || 'Reportes';
-    const filename = `${baseName}_export_${this.timestamp()}.xlsx`;
+    const mes = this.filterMes() || undefined;
+    const vendedor = this.filterVendedor() || undefined;
 
-    import('../../../../core/utils/excel-preview-export')
-      .then(({ exportPreviewRowsToExcel }) => exportPreviewRowsToExcel(columns, rows, filename))
-      .then(() => {
-        this.toast.showSuccess('Exportado', `${rows.length} filas · ${columns.length} columnas.`);
-      })
-      .catch(() => {
-        this.toast.showError(
-          resolvedError(ApiErrorCode.UNKNOWN_ERROR, 'No se pudo generar el archivo Excel.')
-        );
-      })
-      .finally(() => this.exporting.set(false));
+    this.rgfmApi.exportExcel(columns, mes, vendedor).subscribe({
+      next: ({ blob, filename }) => {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        anchor.click();
+        URL.revokeObjectURL(url);
+
+        this.toast.showSuccess('Exportado', `${this.effectiveTotal()} filas · ${columns.length} columnas.`);
+        this.exporting.set(false);
+      },
+      error: (err) => {
+        this.toast.showError(err as ResolvedApiError);
+        this.exporting.set(false);
+      },
+    });
   }
 
   toggleColumnVisibility(header: string, visible: boolean): void {
@@ -402,11 +455,5 @@ export class RgfmDashboardComponent {
       }
     }
     return [...values].sort((a, b) => a.localeCompare(b, 'es'));
-  }
-
-  private timestamp(): string {
-    const now = new Date();
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
   }
 }
