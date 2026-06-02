@@ -2,6 +2,7 @@ import { ApiErrorCode, ApiErrorCodeType } from './api-response.codes';
 
 export const API_ERROR_MESSAGES: Record<ApiErrorCodeType, string> = {
   [ApiErrorCode.AUTH_INVALID_CREDENTIALS]: 'Usuario o contraseña incorrectos.',
+  [ApiErrorCode.AUTH_RATE_LIMITED]: 'Demasiados intentos. Espere un momento.',
   [ApiErrorCode.AUTH_USERNAME_REQUIRED]: 'Ingrese usuario.',
   [ApiErrorCode.AUTH_PASSWORD_REQUIRED]: 'Ingrese su contraseña.',
   [ApiErrorCode.AUTH_FIELDS_REQUIRED]: 'Complete usuario y contraseña.',
@@ -14,6 +15,7 @@ export const API_ERROR_MESSAGES: Record<ApiErrorCodeType, string> = {
 
 export const API_ERROR_TITLES: Record<ApiErrorCodeType, string> = {
   [ApiErrorCode.AUTH_INVALID_CREDENTIALS]: 'Acceso denegado',
+  [ApiErrorCode.AUTH_RATE_LIMITED]: 'Intente de nuevo',
   [ApiErrorCode.AUTH_USERNAME_REQUIRED]: 'Datos incompletos',
   [ApiErrorCode.AUTH_PASSWORD_REQUIRED]: 'Datos incompletos',
   [ApiErrorCode.AUTH_FIELDS_REQUIRED]: 'Datos incompletos',
