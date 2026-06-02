@@ -16,6 +16,12 @@ export interface RgfmDataset {
   total: number;
 }
 
+export interface RgfmDatasetMeta {
+  total: number;
+  sourceFileName: string;
+  importedAt: string | null;
+}
+
 export interface SaveImportResult {
   rowsSaved: number;
   message: string;
@@ -37,6 +43,12 @@ export class RgfmApiService {
   loadDataset(): Observable<RgfmDataset> {
     return this.http
       .get<RgfmDataset>(`${this.baseUrl}/dataset`)
+      .pipe(catchError((err) => throwError(() => mapHttpError(err))));
+  }
+
+  loadDatasetMeta(): Observable<RgfmDatasetMeta> {
+    return this.http
+      .get<RgfmDatasetMeta>(`${this.baseUrl}/dataset-meta`)
       .pipe(catchError((err) => throwError(() => mapHttpError(err))));
   }
 

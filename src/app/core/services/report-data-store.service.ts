@@ -25,6 +25,9 @@ export class ReportDataStoreService {
   private readonly previewColumnOrder = signal<string[]>([]);
   private readonly previewHiddenColumns = signal<string[]>([]);
 
+  /** Incremented on each loadPersisted/clear so views can react to remote dataset updates. */
+  readonly persistedVersion = signal(0);
+
   readonly hasPendingSave = computed(() => this.previewRows().length > 0);
   readonly hasPersistedData = computed(() => this.persistedRows().length > 0);
   readonly hasReportsData = computed(() => this.hasPendingSave() || this.hasPersistedData());
@@ -59,6 +62,7 @@ export class ReportDataStoreService {
     this.persistedColumnOrder.set([]);
     this.persistedHiddenColumns.set([]);
     this.clearPreview();
+    this.persistedVersion.update((v) => v + 1);
   }
 
   /** Vista previa tras importar Excel (aún no guardada en BD). */
@@ -85,6 +89,7 @@ export class ReportDataStoreService {
     this.persistedColumnOrder.set([...columnOrder]);
     this.persistedHiddenColumns.set([...hiddenColumns]);
     this.clearPreview();
+    this.persistedVersion.update((v) => v + 1);
   }
 
   getPreviewForSave(): {

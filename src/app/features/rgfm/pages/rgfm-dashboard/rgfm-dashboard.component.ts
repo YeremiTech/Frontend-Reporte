@@ -17,6 +17,7 @@ import { validateImportFile } from '../../../../core/utils/validate-import-file'
 import { AppViewSettingsService } from '../../../../core/services/app-view-settings.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ReportDataStoreService } from '../../../../core/services/report-data-store.service';
+import { ReportDataSyncService } from '../../../../core/services/report-data-sync.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { LoaderComponent } from '../../../../shared/components/loader/loader.component';
 import { PageShellComponent } from '../../../../shared/components/page-shell/page-shell.component';
@@ -52,6 +53,7 @@ export class RgfmDashboardComponent {
 
   private readonly rgfmApi = inject(RgfmApiService);
   private readonly reportDataStore = inject(ReportDataStoreService);
+  private readonly reportDataSync = inject(ReportDataSyncService);
   private readonly auth = inject(AuthService);
   private readonly appViewSettings = inject(AppViewSettingsService);
   protected readonly toast = inject(ToastService);
@@ -163,6 +165,23 @@ export class RgfmDashboardComponent {
     afterNextRender(() => this.initializeView());
 
     effect(() => {
+      const version = this.reportDataStore.persistedVersion();
+      if (version === 0 || this.hasPendingSave()) {
+        return;
+      }
+
+      const snap = this.reportDataStore.reportsSnapshot();
+      if (!snap?.rows.length) {
+        return;
+      }
+
+      const layout = this.buildColumnLayoutFromHeaders(snap.columns);
+      this.applyColumnLayout(layout.order, layout.hidden, false);
+      this.page.set(0);
+      this.refreshFilterOptions();
+    });
+
+    effect(() => {
       const revision = this.appViewSettings.settings().revision;
       if (revision === this.lastAppliedViewRevision) {
         return;
@@ -250,7 +269,17 @@ export class RgfmDashboardComponent {
     this.appViewSettings.setReportsLayout(this.columnOrder(), this.hiddenColumns());
   }
 
-  applyFilters(): void {
+  onFilterMesChange(value: string): void {
+    this.filterMes.set(value);
+    this.onFiltersChanged();
+  }
+
+  onFilterVendedorChange(value: string): void {
+    this.filterVendedor.set(value);
+    this.onFiltersChanged();
+  }
+
+  private onFiltersChanged(): void {
     this.page.set(0);
     this.refreshFilterOptions();
   }
@@ -384,6 +413,7 @@ export class RgfmDashboardComponent {
             this.appViewSettings.setReportsLayout(persistedLayout.order, persistedLayout.hidden);
             this.refreshFilterOptions();
 
+            this.reportDataSync.noteLocalSave();
             this.toast.showSuccessTitle('Guardado en la DB');
             this.saving.set(false);
           },
@@ -399,6 +429,7 @@ export class RgfmDashboardComponent {
             this.applyColumnLayout(layout.order, layout.hidden, false);
             this.appViewSettings.setReportsLayout(layout.order, layout.hidden);
             this.refreshFilterOptions();
+            this.reportDataSync.noteLocalSave();
             this.toast.showSuccessTitle('Guardado en la DB');
             this.saving.set(false);
           },

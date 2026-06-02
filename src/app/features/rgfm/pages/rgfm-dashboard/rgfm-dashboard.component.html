@@ -25,80 +25,94 @@
     />
 
     <div class="block-actions-row">
-      <div class="filters-group">
-        <label class="rgfm-field" for="filter-mes">
-          <span class="rgfm-field__label">Mes</span>
-          <select
-            id="filter-mes"
-            class="form-select form-select-sm"
-            [ngModel]="filterMes()"
-            (ngModelChange)="filterMes.set($event)"
+      <div class="toolbar-filters">
+        <div class="toolbar-filters__fields">
+          <label class="rgfm-field rgfm-field--compact" for="filter-mes">
+            <span class="rgfm-field__label">Mes</span>
+            <select
+              id="filter-mes"
+              class="form-select form-select-sm"
+              [ngModel]="filterMes()"
+              (ngModelChange)="onFilterMesChange($event)"
+            >
+              <option value="">Todos</option>
+              @for (mes of meses(); track mes) {
+                <option [value]="mes">{{ mes }}</option>
+              }
+            </select>
+          </label>
+          <label class="rgfm-field rgfm-field--compact" for="filter-vendedor">
+            <span class="rgfm-field__label">Vendedor</span>
+            <select
+              id="filter-vendedor"
+              class="form-select form-select-sm"
+              [ngModel]="filterVendedor()"
+              (ngModelChange)="onFilterVendedorChange($event)"
+            >
+              <option value="">Todos</option>
+              @for (v of vendedores(); track v) {
+                <option [value]="v">{{ v }}</option>
+              }
+            </select>
+          </label>
+        </div>
+        @if (hasActiveFilters()) {
+          <button
+            type="button"
+            class="btn btn-rgfm-page btn-sm toolbar-filters__clear"
+            (click)="clearFilters()"
+            aria-label="Limpiar filtros"
           >
-            <option value="">Todos</option>
-            @for (mes of meses(); track mes) {
-              <option [value]="mes">{{ mes }}</option>
-            }
-          </select>
-        </label>
-        <label class="rgfm-field" for="filter-vendedor">
-          <span class="rgfm-field__label">Vendedor</span>
-          <select
-            id="filter-vendedor"
-            class="form-select form-select-sm"
-            [ngModel]="filterVendedor()"
-            (ngModelChange)="filterVendedor.set($event)"
-          >
-            <option value="">Todos</option>
-            @for (v of vendedores(); track v) {
-              <option [value]="v">{{ v }}</option>
-            }
-          </select>
-        </label>
-        <button type="button" class="btn btn-rgfm-primary btn-sm" (click)="applyFilters()">
-          <i class="bi bi-funnel me-1"></i>Filtrar
-        </button>
-        <button type="button" class="btn btn-rgfm-primary btn-sm" (click)="clearFilters()">
-          Limpiar
-        </button>
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+            <span class="toolbar-filters__clear-text">Limpiar</span>
+          </button>
+        }
       </div>
 
-      <div class="buttons-group">
+      <div class="toolbar-actions">
         @if (canEdit()) {
-          <button type="button" class="btn btn-rgfm-primary btn-sm" (click)="openImportDialog()" [disabled]="importing()">
-            <i class="bi bi-upload me-1"></i>
-            Importar
+          <button
+            type="button"
+            class="btn btn-rgfm-primary btn-sm toolbar-actions__btn"
+            (click)="openImportDialog()"
+            [disabled]="importing()"
+          >
+            <i class="bi bi-upload" aria-hidden="true"></i>
+            <span>Importar</span>
           </button>
           @if (hasPendingSave()) {
             <button
               type="button"
-              class="btn btn-rgfm-primary btn-sm"
+              class="btn btn-rgfm-primary btn-sm toolbar-actions__btn"
               (click)="saveToDatabase()"
               [disabled]="saving() || importing()"
             >
-              <i class="bi bi-database-fill-check me-1"></i>
-              Guardar
+              <i class="bi bi-database-fill-check" aria-hidden="true"></i>
+              <span>Guardar</span>
             </button>
           }
         }
         <button
           type="button"
-          class="btn btn-rgfm-primary btn-sm"
+          class="btn btn-rgfm-primary btn-sm toolbar-actions__btn"
           (click)="exportExcel()"
           [disabled]="exporting() || effectiveTotal() === 0 || displayColumns().length === 0"
         >
-          <i class="bi bi-download me-1"></i>
-          Exportar
+          <i class="bi bi-download" aria-hidden="true"></i>
+          <span>Exportar</span>
         </button>
         @if (canEdit()) {
           <button
             type="button"
-            class="btn btn-rgfm-primary btn-sm"
+            class="btn btn-rgfm-primary btn-sm toolbar-actions__btn"
             [class.btn-column-panel-active]="showColumnPanel()"
             [attr.aria-expanded]="showColumnPanel()"
+            [attr.aria-label]="showColumnPanel() ? 'Ocultar panel de columnas' : 'Asignar columnas'"
             (click)="toggleColumnPanel()"
           >
-            <i class="bi bi-layout-three-columns me-1"></i>
-            Asignar columnas
+            <i class="bi bi-layout-three-columns" aria-hidden="true"></i>
+            <span class="toolbar-actions__label-full">Asignar columnas</span>
+            <span class="toolbar-actions__label-short">Columnas</span>
           </button>
         }
       </div>

@@ -3,6 +3,7 @@ import { NgClass } from '@angular/common';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { AppViewSettingsService } from '../../core/services/app-view-settings.service';
+import { ReportDataSyncService } from '../../core/services/report-data-sync.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PresenceApiService } from '../../core/services/api.service';
 import { SidebarService } from '../../core/services/sidebar.service';
@@ -28,6 +29,7 @@ export class MainLayoutComponent implements OnDestroy {
   readonly sidebar = inject(SidebarService);
   private readonly router = inject(Router);
   private readonly viewSettings = inject(AppViewSettingsService);
+  private readonly reportDataSync = inject(ReportDataSyncService);
   private readonly presenceApi = inject(PresenceApiService);
 
   private routerSub?: Subscription;
@@ -66,12 +68,12 @@ export class MainLayoutComponent implements OnDestroy {
 
   constructor() {
     afterNextRender(() => {
-      this.viewSettings.load().subscribe();
+      this.refreshSharedState();
 
       this.routerSub = this.router.events
         .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
         .subscribe(() => {
-          this.viewSettings.refreshIfNewer().subscribe();
+          this.refreshSharedState();
         });
 
       if (typeof globalThis.window !== 'undefined') {
@@ -79,7 +81,7 @@ export class MainLayoutComponent implements OnDestroy {
           if (typeof document !== 'undefined' && document.hidden) {
             return;
           }
-          this.viewSettings.refreshIfNewer().subscribe();
+          this.refreshSharedState();
         }, 5_000);
 
         this.presenceIntervalId = globalThis.window.setInterval(() => {
@@ -122,6 +124,11 @@ export class MainLayoutComponent implements OnDestroy {
     if (this.beforeUnloadHandler && typeof globalThis.window !== 'undefined') {
       globalThis.window.removeEventListener('beforeunload', this.beforeUnloadHandler);
     }
+  }
+
+  private refreshSharedState(): void {
+    this.viewSettings.refreshIfNewer().subscribe();
+    this.reportDataSync.refreshIfChanged().subscribe();
   }
 
   onNavigate(): void {
