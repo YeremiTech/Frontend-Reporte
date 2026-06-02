@@ -7,5 +7,5 @@ export const environment = {
    * URLs: https://frontend-reporte.onrender.com/#/graficos
    * Si configura rewrite en Render, puede poner useHashRouting en false.
    */
-  useHashRouting: true,
+  useHashRouting: false,
 };
