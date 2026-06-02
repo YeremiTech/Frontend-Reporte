@@ -340,8 +340,8 @@ export class RgfmDashboardComponent {
         this.refreshFilterOptions();
 
         this.toast.showSuccess(
-          'Vista previa cargada',
-          `${result.rowsImported} filas listas. Use Guardar para persistir en la base de datos.`
+          'Vista previa',
+          `${result.rowsImported} filas`
         );
         this.importing.set(false);
         input.value = '';
@@ -388,7 +388,7 @@ export class RgfmDashboardComponent {
 
             this.toast.showSuccess(
               'Datos guardados',
-              `${result.rowsSaved} filas en la base. Los datos anteriores fueron reemplazados. Disponible en Gráficos y Resumen.`
+              `${result.rowsSaved} filas`
             );
             this.saving.set(false);
           },
@@ -406,7 +406,7 @@ export class RgfmDashboardComponent {
             this.refreshFilterOptions();
             this.toast.showSuccess(
               'Datos guardados',
-              `${result.rowsSaved} filas en la base. Los datos anteriores fueron reemplazados. Disponible en Gráficos y Resumen.`
+              `${result.rowsSaved} filas`
             );
             this.saving.set(false);
           },

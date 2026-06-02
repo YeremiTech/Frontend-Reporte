@@ -197,8 +197,7 @@
 @include bp.down(bp.$bp-sm) {
   .login-page {
     padding: calc(1rem + var(--safe-top)) 1rem calc(1rem + var(--safe-bottom));
-    align-items: flex-start;
-    padding-top: calc(2rem + var(--safe-top));
+    align-items: center;
   }
 
   .login-card-wrapper {

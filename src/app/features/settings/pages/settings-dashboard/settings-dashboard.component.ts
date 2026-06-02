@@ -122,7 +122,7 @@ export class SettingsDashboardComponent implements OnInit {
       next: (created) => {
         this.upsertUserInList(created);
         this.resetForm();
-        this.toast.showSuccess('Usuario creado', `${created.username} puede iniciar sesión como ${created.role}.`);
+        this.toast.showSuccess('Usuario creado', created.username);
         this.submitting.set(false);
       },
       error: (err) => {
@@ -144,7 +144,7 @@ export class SettingsDashboardComponent implements OnInit {
       next: (updated) => {
         this.upsertUserInList(updated);
         this.startCreate();
-        this.toast.showSuccess('Usuario actualizado', `${updated.username} (${updated.role}).`);
+        this.toast.showSuccess('Usuario actualizado', updated.username);
         this.submitting.set(false);
       },
       error: (err) => {
@@ -166,7 +166,7 @@ export class SettingsDashboardComponent implements OnInit {
         if (this.editingUserId() === user.id) {
           this.startCreate();
         }
-        this.toast.showSuccess('Usuario eliminado', `${user.username} ya no puede iniciar sesión.`);
+        this.toast.showSuccess('Usuario eliminado', user.username);
         this.submitting.set(false);
       },
       error: (err) => {
