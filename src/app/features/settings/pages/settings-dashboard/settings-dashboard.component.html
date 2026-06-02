@@ -37,6 +37,7 @@
             class="form-control form-control-sm"
             [(ngModel)]="formUsername"
             name="username"
+            placeholder="Usuario"
             autocomplete="off"
             required
             maxlength="80"
@@ -49,6 +50,7 @@
             class="form-control form-control-sm"
             [(ngModel)]="formEmail"
             name="email"
+            placeholder="Correo"
             autocomplete="off"
             required
             maxlength="120"
@@ -71,8 +73,8 @@
         <label class="settings-field">
           <span>Rol</span>
           <select class="form-select form-select-sm" [(ngModel)]="formRole" name="role">
-            <option value="USER">USER — solo lectura</option>
-            <option value="ADMIN">ADMIN — edición completa</option>
+            <option value="USER">CLIENTE</option>
+            <option value="ADMIN">ADMINISTRADOR</option>
           </select>
         </label>
         <div class="settings-form__actions">
@@ -107,7 +109,7 @@
                   <td class="col-email">{{ user.email }}</td>
                   <td class="col-role">
                     <span class="role-badge" [class.role-badge--admin]="user.role === 'ADMIN'">
-                      {{ user.role }}
+                      {{ user.role === 'ADMIN' ? 'ADMINISTRADOR' : 'CLIENTE' }}
                     </span>
                   </td>
                   <td class="col-date">{{ formatDate(user.createdAt) }}</td>

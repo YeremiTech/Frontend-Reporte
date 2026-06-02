@@ -60,6 +60,31 @@
   gap: 0.25rem;
   font-size: 0.8125rem;
   font-weight: 500;
+
+  .form-control,
+  .form-select {
+    background: #fff;
+    outline: none;
+  }
+
+  .form-control:focus,
+  .form-control:focus-visible,
+  .form-select:focus,
+  .form-select:focus-visible {
+    outline: none;
+    border-color: #1a3a5a;
+    box-shadow: 0 0 0 3px rgb(26 58 90 / 12%);
+    background: #fff;
+  }
+
+  /* Evita el color de autofill en Chrome/Edge/Brave. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #1e293b;
+    box-shadow: 0 0 0 1000px #fff inset;
+    transition: background-color 9999s ease-in-out 0s;
+  }
 }
 
 .settings-empty {
