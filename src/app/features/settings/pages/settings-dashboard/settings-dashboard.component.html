@@ -1,0 +1,149 @@
+<app-page-shell title="Configuración">
+  @if (loading() || submitting()) {
+    <app-loader
+      [overlay]="true"
+      [message]="loaderActionMessage()"
+      color="#FFAA49"
+      [size]="48"
+    />
+  }
+
+  @if (toast.state(); as t) {
+    <div class="tg-alert-stack" aria-live="polite">
+      <app-tailgrids-alert
+        [variant]="t.variant"
+        [title]="t.title"
+        [message]="t.message"
+        (closed)="toast.dismiss()"
+      />
+    </div>
+  }
+
+  <section class="settings-page page-body-fill">
+    <div class="settings-card">
+      <div class="settings-card__header">
+        <h2 class="settings-card__title">{{ formTitle() }}</h2>
+        @if (isEditing()) {
+          <button type="button" class="btn btn-link btn-sm" (click)="cancelEdit()">
+            Cancelar edición
+          </button>
+        }
+      </div>
+      <p class="settings-card__hint">
+        Los usuarios con rol <strong>USER</strong> pueden ver reportes, gráficos y resumen, pero no importar ni guardar Excel.
+      </p>
+
+      <form class="settings-form" (ngSubmit)="submitForm()">
+        <label class="settings-field">
+          <span>Usuario</span>
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            [(ngModel)]="formUsername"
+            name="username"
+            autocomplete="off"
+            required
+            maxlength="80"
+          />
+        </label>
+        <label class="settings-field">
+          <span>Correo</span>
+          <input
+            type="email"
+            class="form-control form-control-sm"
+            [(ngModel)]="formEmail"
+            name="email"
+            autocomplete="off"
+            required
+            maxlength="120"
+          />
+        </label>
+        <label class="settings-field">
+          <span>Contraseña</span>
+          <input
+            type="password"
+            class="form-control form-control-sm"
+            [(ngModel)]="formPassword"
+            name="password"
+            [attr.autocomplete]="isEditing() ? 'new-password' : 'new-password'"
+            [required]="!isEditing()"
+            [placeholder]="isEditing() ? 'Vacío = sin cambiar' : ''"
+            minlength="4"
+            maxlength="100"
+          />
+        </label>
+        <label class="settings-field">
+          <span>Rol</span>
+          <select class="form-select form-select-sm" [(ngModel)]="formRole" name="role">
+            <option value="USER">USER — solo lectura</option>
+            <option value="ADMIN">ADMIN — edición completa</option>
+          </select>
+        </label>
+        <div class="settings-form__actions">
+          <button type="submit" class="btn btn-rgfm-primary btn-sm" [disabled]="submitting()">
+            <i class="bi" [class]="isEditing() ? 'bi-check-lg me-1' : 'bi-person-plus-fill me-1'"></i>
+            {{ submitLabel() }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="settings-card">
+      <h2 class="settings-card__title">Usuarios registrados</h2>
+      @if (users().length === 0 && !loading()) {
+        <p class="settings-empty">No hay usuarios registrados.</p>
+      } @else {
+        <div class="table-wrapper">
+          <table class="table table-sm mb-0" aria-label="Lista de usuarios">
+            <thead>
+              <tr>
+                <th scope="col">Usuario</th>
+                <th scope="col">Correo</th>
+                <th scope="col">Rol</th>
+                <th scope="col">Creado</th>
+                <th scope="col" class="text-end">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of users(); track user.id) {
+                <tr [class.row-editing]="editingUserId() === user.id">
+                  <td>{{ user.username }}</td>
+                  <td>{{ user.email }}</td>
+                  <td>
+                    <span class="role-badge" [class.role-badge--admin]="user.role === 'ADMIN'">
+                      {{ user.role }}
+                    </span>
+                  </td>
+                  <td>{{ formatDate(user.createdAt) }}</td>
+                  <td class="text-end">
+                    <div class="row-actions">
+                      <button
+                        type="button"
+                        class="btn btn-rgfm-primary btn-sm"
+                        (click)="startEdit(user)"
+                        [disabled]="submitting()"
+                        [attr.aria-label]="'Editar ' + user.username"
+                      >
+                        <i class="bi bi-pencil-fill"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-rgfm-danger btn-sm"
+                        (click)="deleteUser(user)"
+                        [disabled]="submitting() || isCurrentUser(user)"
+                        [title]="isCurrentUser(user) ? 'No puede eliminar su propia cuenta' : 'Eliminar usuario'"
+                        [attr.aria-label]="'Eliminar ' + user.username"
+                      >
+                        <i class="bi bi-trash-fill"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </section>
+</app-page-shell>

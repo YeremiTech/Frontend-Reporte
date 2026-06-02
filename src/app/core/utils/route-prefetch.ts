@@ -16,6 +16,9 @@ export function prefetchRouteChunk(route: string): void {
     case '/graficos':
       void import('../../features/charts/pages/charts-dashboard/charts-dashboard.component');
       break;
+    case '/configuracion':
+      void import('../../features/settings/pages/settings-dashboard/settings-dashboard.component');
+      break;
     default:
       prefetchedRoutes.delete(route);
   }

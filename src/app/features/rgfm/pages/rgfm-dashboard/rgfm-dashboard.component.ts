@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   signal,
   ViewChild,
@@ -13,6 +14,8 @@ import { ApiErrorCode } from '../../../../core/constants';
 import { RgfmApiService } from '../../../../core/services/api.service';
 import { resolvedError } from '../../../../core/utils/api-error.resolver';
 import { validateImportFile } from '../../../../core/utils/validate-import-file';
+import { AppViewSettingsService } from '../../../../core/services/app-view-settings.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { ReportDataStoreService } from '../../../../core/services/report-data-store.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { LoaderComponent } from '../../../../shared/components/loader/loader.component';
@@ -49,7 +52,13 @@ export class RgfmDashboardComponent {
 
   private readonly rgfmApi = inject(RgfmApiService);
   private readonly reportDataStore = inject(ReportDataStoreService);
+  private readonly auth = inject(AuthService);
+  private readonly appViewSettings = inject(AppViewSettingsService);
   protected readonly toast = inject(ToastService);
+
+  readonly canEdit = this.auth.canEditReports;
+
+  private lastAppliedViewRevision = -1;
   readonly pageSize = 50;
 
   columnOrder = signal<string[]>([]);
@@ -152,6 +161,22 @@ export class RgfmDashboardComponent {
 
   constructor() {
     afterNextRender(() => this.initializeView());
+
+    effect(() => {
+      const revision = this.appViewSettings.settings().revision;
+      if (revision === this.lastAppliedViewRevision) {
+        return;
+      }
+
+      const headers = this.resolveCurrentHeaders();
+      if (!headers.length) {
+        return;
+      }
+
+      this.lastAppliedViewRevision = revision;
+      const layout = this.appViewSettings.buildReportsLayoutFromHeaders(headers);
+      this.applyColumnLayout(layout.order, layout.hidden, true);
+    });
   }
 
   private initializeView(): void {
@@ -175,7 +200,7 @@ export class RgfmDashboardComponent {
           return;
         }
 
-        const layout = this.buildImportedColumnLayout(dataset.headers);
+        const layout = this.buildColumnLayoutFromHeaders(dataset.headers);
         this.applyColumnLayout(layout.order, layout.hidden, false);
 
         this.reportDataStore.loadPersisted({
@@ -216,7 +241,11 @@ export class RgfmDashboardComponent {
   }
 
   private persistColumnLayout(): void {
+    if (!this.canEdit()) {
+      return;
+    }
     this.reportDataStore.setColumnLayout(this.columnOrder(), this.hiddenColumns());
+    this.appViewSettings.setReportsLayout(this.columnOrder(), this.hiddenColumns());
   }
 
   applyFilters(): void {
@@ -228,7 +257,9 @@ export class RgfmDashboardComponent {
     this.filterMes.set('');
     this.filterVendedor.set('');
     this.page.set(0);
-    this.restoreBaselineColumnLayout();
+    if (this.canEdit()) {
+      this.restoreBaselineColumnLayout();
+    }
     this.refreshFilterOptions();
   }
 
@@ -263,10 +294,16 @@ export class RgfmDashboardComponent {
   }
 
   openImportDialog(): void {
+    if (!this.canEdit()) {
+      return;
+    }
     this.fileInputRef?.nativeElement.click();
   }
 
   onFileSelected(event: Event): void {
+    if (!this.canEdit()) {
+      return;
+    }
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     const validationError = validateImportFile(file);
@@ -281,7 +318,7 @@ export class RgfmDashboardComponent {
 
     this.rgfmApi.importExcel(file!).subscribe({
       next: (result) => {
-        const layout = this.buildImportedColumnLayout(result.headersFound);
+        const layout = this.buildColumnLayoutFromHeaders(result.headersFound);
 
         this.filterMes.set('');
         this.filterVendedor.set('');
@@ -317,6 +354,9 @@ export class RgfmDashboardComponent {
   }
 
   saveToDatabase(): void {
+    if (!this.canEdit()) {
+      return;
+    }
     const preview = this.reportDataStore.getPreviewForSave();
     if (!preview) {
       return;
@@ -327,7 +367,7 @@ export class RgfmDashboardComponent {
 
     this.rgfmApi.saveImport(preview).subscribe({
       next: (result) => {
-        const layout = this.buildImportedColumnLayout(result.headersPersisted);
+        const layout = this.buildColumnLayoutFromHeaders(result.headersPersisted);
 
         this.reportDataStore.loadPersisted({
           rows: preview.rows,
@@ -338,6 +378,7 @@ export class RgfmDashboardComponent {
         });
 
         this.applyColumnLayout(layout.order, layout.hidden, false);
+        this.appViewSettings.setReportsLayout(layout.order, layout.hidden);
         this.refreshFilterOptions();
 
         this.toast.showSuccess(
@@ -353,11 +394,16 @@ export class RgfmDashboardComponent {
     });
   }
 
-  private buildImportedColumnLayout(headersFound: string[]): { order: string[]; hidden: Set<string> } {
-    return {
-      order: uniqueImportHeaders(headersFound),
-      hidden: new Set<string>(),
-    };
+  private buildColumnLayoutFromHeaders(headersFound: string[]): { order: string[]; hidden: Set<string> } {
+    return this.appViewSettings.buildReportsLayoutFromHeaders(uniqueImportHeaders(headersFound));
+  }
+
+  private resolveCurrentHeaders(): string[] {
+    const snap = this.reportDataStore.reportsSnapshot();
+    if (!snap) {
+      return [];
+    }
+    return uniqueImportHeaders(snap.columns);
   }
 
   private setBaselineColumnLayout(order: string[], hidden: Set<string>): void {
@@ -372,6 +418,10 @@ export class RgfmDashboardComponent {
   }
 
   onColumnDragStart(header: string, event: DragEvent): void {
+    if (!this.canEdit()) {
+      event.preventDefault();
+      return;
+    }
     this.draggedColumnHeader = header;
     event.dataTransfer?.setData('text/plain', header);
     if (event.dataTransfer) {
@@ -407,6 +457,9 @@ export class RgfmDashboardComponent {
   }
 
   moveColumn(sourceHeader: string, targetHeader: string): void {
+    if (!this.canEdit()) {
+      return;
+    }
     const order = [...this.columnOrder()];
     const fromIndex = order.indexOf(sourceHeader);
     const toIndex = order.indexOf(targetHeader);
@@ -457,6 +510,9 @@ export class RgfmDashboardComponent {
   }
 
   toggleColumnVisibility(header: string, visible: boolean): void {
+    if (!this.canEdit()) {
+      return;
+    }
     const hidden = new Set(this.hiddenColumns());
     if (visible) {
       hidden.delete(header);
@@ -468,11 +524,17 @@ export class RgfmDashboardComponent {
   }
 
   showAllColumns(): void {
+    if (!this.canEdit()) {
+      return;
+    }
     this.hiddenColumns.set(new Set());
     this.persistColumnLayout();
   }
 
   hideAllColumns(): void {
+    if (!this.canEdit()) {
+      return;
+    }
     this.hiddenColumns.set(new Set(this.columnOrder()));
     this.persistColumnLayout();
   }

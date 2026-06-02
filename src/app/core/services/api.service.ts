@@ -4,7 +4,9 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthResponse, LoginRequest } from '../models/auth.model';
+import { CreateUsuarioRequest, UpdateUsuarioRequest, UsuarioSummary } from '../models/user.model';
 import { ImportResult } from '../models/rgfm.model';
+import { ViewSettings } from '../models/view-settings.model';
 import { mapHttpError } from '../utils/http-error.mapper';
 
 export interface RgfmDataset {
@@ -87,6 +89,54 @@ export class RgfmApiService {
       }),
       catchError((err) => throwError(() => mapHttpError(err)))
     );
+  }
+}
+
+@Injectable({ providedIn: 'root' })
+export class UserAdminApiService {
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = `${environment.apiUrl}/api/users`;
+
+  listUsers(): Observable<UsuarioSummary[]> {
+    return this.http
+      .get<UsuarioSummary[]>(this.baseUrl)
+      .pipe(catchError((err) => throwError(() => mapHttpError(err))));
+  }
+
+  createUser(payload: CreateUsuarioRequest): Observable<UsuarioSummary> {
+    return this.http
+      .post<UsuarioSummary>(this.baseUrl, payload)
+      .pipe(catchError((err) => throwError(() => mapHttpError(err))));
+  }
+
+  updateUser(id: number, payload: UpdateUsuarioRequest): Observable<UsuarioSummary> {
+    return this.http
+      .put<UsuarioSummary>(`${this.baseUrl}/${id}`, payload)
+      .pipe(catchError((err) => throwError(() => mapHttpError(err))));
+  }
+
+  deleteUser(id: number): Observable<void> {
+    return this.http
+      .delete<void>(`${this.baseUrl}/${id}`)
+      .pipe(catchError((err) => throwError(() => mapHttpError(err))));
+  }
+}
+
+@Injectable({ providedIn: 'root' })
+export class ViewSettingsApiService {
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = `${environment.apiUrl}/api/view-settings`;
+
+  getSettings(): Observable<ViewSettings> {
+    return this.http
+      .get<ViewSettings>(this.baseUrl)
+      .pipe(catchError((err) => throwError(() => mapHttpError(err))));
+  }
+
+  saveSettings(payload: ViewSettings): Observable<ViewSettings> {
+    return this.http
+      .put<ViewSettings>(this.baseUrl, payload)
+      .pipe(catchError((err) => throwError(() => mapHttpError(err))));
   }
 }
 

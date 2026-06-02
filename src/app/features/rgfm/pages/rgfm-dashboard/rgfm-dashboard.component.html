@@ -63,20 +63,22 @@
       </div>
 
       <div class="buttons-group">
-        <button type="button" class="btn btn-rgfm-primary btn-sm" (click)="openImportDialog()" [disabled]="importing()">
-          <i class="bi bi-upload me-1"></i>
-          Importar
-        </button>
-        @if (hasPendingSave()) {
-          <button
-            type="button"
-            class="btn btn-rgfm-primary btn-sm"
-            (click)="saveToDatabase()"
-            [disabled]="saving() || importing()"
-          >
-            <i class="bi bi-database-fill-check me-1"></i>
-            Guardar
+        @if (canEdit()) {
+          <button type="button" class="btn btn-rgfm-primary btn-sm" (click)="openImportDialog()" [disabled]="importing()">
+            <i class="bi bi-upload me-1"></i>
+            Importar
           </button>
+          @if (hasPendingSave()) {
+            <button
+              type="button"
+              class="btn btn-rgfm-primary btn-sm"
+              (click)="saveToDatabase()"
+              [disabled]="saving() || importing()"
+            >
+              <i class="bi bi-database-fill-check me-1"></i>
+              Guardar
+            </button>
+          }
         }
         <button
           type="button"
@@ -87,28 +89,32 @@
           <i class="bi bi-download me-1"></i>
           Exportar
         </button>
-        <button
-          type="button"
-          class="btn btn-rgfm-primary btn-sm"
-          [class.btn-column-panel-active]="showColumnPanel()"
-          [attr.aria-expanded]="showColumnPanel()"
-          (click)="toggleColumnPanel()"
-        >
-          <i class="bi bi-layout-three-columns me-1"></i>
-          Asignar columnas
-        </button>
+        @if (canEdit()) {
+          <button
+            type="button"
+            class="btn btn-rgfm-primary btn-sm"
+            [class.btn-column-panel-active]="showColumnPanel()"
+            [attr.aria-expanded]="showColumnPanel()"
+            (click)="toggleColumnPanel()"
+          >
+            <i class="bi bi-layout-three-columns me-1"></i>
+            Asignar columnas
+          </button>
+        }
       </div>
     </div>
 
-    @defer (when showColumnPanel()) {
-      <app-rgfm-column-panel
-        [columnOrder]="columnOrder()"
-        [hiddenColumns]="hiddenColumns()"
-        [visibleCount]="displayColumns().length"
-        (visibilityChange)="onColumnVisibilityChange($event)"
-        (showAll)="showAllColumns()"
-        (hideAll)="hideAllColumns()"
-      />
+    @if (canEdit()) {
+      @defer (when showColumnPanel()) {
+        <app-rgfm-column-panel
+          [columnOrder]="columnOrder()"
+          [hiddenColumns]="hiddenColumns()"
+          [visibleCount]="displayColumns().length"
+          (visibilityChange)="onColumnVisibilityChange($event)"
+          (showAll)="showAllColumns()"
+          (hideAll)="hideAllColumns()"
+        />
+      }
     }
 
     <div class="block-table">
@@ -123,17 +129,19 @@
                 @for (header of displayColumns(); track header) {
                   <th
                     scope="col"
-                    class="draggable-th"
-                    [class.column-dragging]="isColumnDragging(header)"
-                    [class.column-drag-over]="isColumnDragTarget(header)"
-                    draggable="true"
+                    [class.draggable-th]="canEdit()"
+                    [class.column-dragging]="canEdit() && isColumnDragging(header)"
+                    [class.column-drag-over]="canEdit() && isColumnDragTarget(header)"
+                    [attr.draggable]="canEdit() ? true : null"
                     (dragstart)="onColumnDragStart(header, $event)"
                     (dragover)="onColumnDragOver(header, $event)"
                     (dragleave)="onColumnDragLeave()"
                     (drop)="onColumnDrop(header, $event)"
                     (dragend)="onColumnDragEnd()"
                   >
-                    <i class="bi bi-grip-vertical drag-handle" aria-hidden="true"></i>
+                    @if (canEdit()) {
+                      <i class="bi bi-grip-vertical drag-handle" aria-hidden="true"></i>
+                    }
                     {{ header }}
                   </th>
                 }
@@ -143,7 +151,11 @@
               @if (effectiveTotal() === 0) {
                 <tr>
                   <td [attr.colspan]="displayColumns().length + 1" class="empty-row">
-                    No hay datos. Use <strong>Importar</strong> y luego <strong>Guardar</strong> para persistir en la base.
+                    @if (canEdit()) {
+                      No hay datos. Use <strong>Importar</strong> y luego <strong>Guardar</strong> para persistir en la base.
+                    } @else {
+                      No hay datos guardados en el sistema.
+                    }
                   </td>
                 </tr>
               } @else {

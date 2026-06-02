@@ -43,6 +43,14 @@ export class AuthService {
     return !!this.getToken() && !!this.currentUser();
   }
 
+  isAdmin(): boolean {
+    return this.currentUser()?.role === 'ADMIN';
+  }
+
+  canEditReports(): boolean {
+    return this.isAdmin();
+  }
+
   private loadUser(): AuthUser | null {
     if (!localStorage.getItem(TOKEN_KEY)) {
       return null;

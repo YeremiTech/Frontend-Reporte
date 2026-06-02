@@ -14,6 +14,8 @@ import type {
   ChartOptions,
   ColumnMeta,
 } from '../../../../core/models/chart.model';
+import { AppViewSettingsService } from '../../../../core/services/app-view-settings.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { ChartAnalyticsService } from '../../../../core/services/chart-analytics.service';
 import { RgfmApiService } from '../../../../core/services/api.service';
 import { ReportDataStoreService } from '../../../../core/services/report-data-store.service';
@@ -58,6 +60,10 @@ export class ChartsDashboardComponent {
   private readonly dataStore = inject(ReportDataStoreService);
   private readonly analytics = inject(ChartAnalyticsService);
   private readonly rgfmApi = inject(RgfmApiService);
+  private readonly appViewSettings = inject(AppViewSettingsService);
+  private readonly auth = inject(AuthService);
+
+  private lastAppliedChartsRevision = -1;
 
   readonly hasData = this.dataStore.hasPersistedData;
 
@@ -172,6 +178,9 @@ export class ChartsDashboardComponent {
 
       if (isNewDataset) {
         this.lastColumnSignature = signature;
+        if (this.applySavedChartsConfig(categories, values)) {
+          return;
+        }
         const firstCategory = categories[0].name;
         const firstValue = values[0]?.name;
         this.config.set({
@@ -181,6 +190,7 @@ export class ChartsDashboardComponent {
           title: '',
           topN: 12,
         });
+        this.pushChartsSettings();
         return;
       }
 
@@ -200,6 +210,23 @@ export class ChartsDashboardComponent {
         valueColumn: valueValid ? current.valueColumn : firstValue,
         aggregation: valueValid && current.valueColumn ? current.aggregation : firstValue ? 'sum' : 'count',
       });
+      this.pushChartsSettings();
+    });
+
+    effect(() => {
+      const revision = this.appViewSettings.settings().revision;
+      if (revision === this.lastAppliedChartsRevision) {
+        return;
+      }
+      const categories = this.categoryColumns();
+      const values = this.valueColumns();
+      if (!categories.length) {
+        return;
+      }
+      if (!this.applySavedChartsConfig(categories, values)) {
+        return;
+      }
+      this.lastAppliedChartsRevision = revision;
     });
   }
 
@@ -228,6 +255,7 @@ export class ChartsDashboardComponent {
 
   onCategoryChange(column: string): void {
     this.config.update((c) => ({ ...c, categoryColumn: column }));
+    this.pushChartsSettings();
   }
 
   onValueChange(column: string): void {
@@ -236,14 +264,17 @@ export class ChartsDashboardComponent {
       valueColumn: column || undefined,
       aggregation: column ? c.aggregation : 'count',
     }));
+    this.pushChartsSettings();
   }
 
   onAggregationChange(aggregation: ChartAggregation): void {
     this.config.update((c) => ({ ...c, aggregation }));
+    this.pushChartsSettings();
   }
 
   onTitleChange(title: string): void {
     this.config.update((c) => ({ ...c, title }));
+    this.pushChartsSettings();
   }
 
   onTopNChange(topN: number): void {
@@ -257,6 +288,7 @@ export class ChartsDashboardComponent {
     this.topNDebounceId = setTimeout(() => {
       this.config.update((c) => ({ ...c, topN: clamped }));
       this.topNDebounceId = null;
+      this.pushChartsSettings();
     }, 250);
   }
 
@@ -273,6 +305,59 @@ export class ChartsDashboardComponent {
         next.add(kind);
       }
       return next;
+    });
+    this.pushChartsSettings();
+  }
+
+  private applySavedChartsConfig(
+    categories: ColumnMeta[],
+    values: ColumnMeta[]
+  ): boolean {
+    const saved = this.appViewSettings.chartsLayout();
+    if (!saved?.categoryColumn) {
+      return false;
+    }
+
+    const categoryValid = categories.some((column) => column.name === saved.categoryColumn);
+    if (!categoryValid) {
+      return false;
+    }
+
+    const valueValid =
+      !saved.valueColumn || values.some((column) => column.name === saved.valueColumn);
+
+    this.config.set({
+      categoryColumn: saved.categoryColumn,
+      valueColumn: valueValid ? saved.valueColumn : values[0]?.name,
+      aggregation: saved.aggregation ?? 'sum',
+      title: saved.title ?? '',
+      topN: saved.topN ?? 12,
+    });
+
+    const panels = (saved.expandedPanels ?? ['bar']).filter((kind): kind is ChartKind =>
+      CHART_PANELS.some((panel) => panel.kind === kind)
+    );
+    this.expandedPanels.set(new Set(panels.length > 0 ? panels : ['bar']));
+    return true;
+  }
+
+  private pushChartsSettings(): void {
+    if (!this.auth.isAdmin()) {
+      return;
+    }
+
+    const cfg = this.config();
+    if (!cfg.categoryColumn) {
+      return;
+    }
+
+    this.appViewSettings.setChartsLayout({
+      categoryColumn: cfg.categoryColumn,
+      valueColumn: cfg.valueColumn,
+      aggregation: cfg.aggregation,
+      title: cfg.title,
+      topN: cfg.topN,
+      expandedPanels: [...this.expandedPanels()],
     });
   }
 

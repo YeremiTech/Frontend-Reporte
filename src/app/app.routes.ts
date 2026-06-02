@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -34,6 +35,14 @@ export const routes: Routes = [
           import('./features/summary/pages/vendor-summary/vendor-summary.component').then(
             (m) => m.VendorSummaryComponent
           ),
+      },
+      {
+        path: 'configuracion',
+        loadComponent: () =>
+          import('./features/settings/pages/settings-dashboard/settings-dashboard.component').then(
+            (m) => m.SettingsDashboardComponent
+          ),
+        canActivate: [adminGuard],
       },
     ],
   },
