@@ -64,6 +64,7 @@ export class SettingsDashboardComponent implements OnInit {
   formPassword = '';
   formEmail = '';
   formRole: AppRole = 'USER';
+  formActive = true;
 
   ngOnInit(): void {
     this.loadUsers();
@@ -95,6 +96,7 @@ export class SettingsDashboardComponent implements OnInit {
     this.formUsername = user.username;
     this.formEmail = user.email;
     this.formRole = user.role;
+    this.formActive = user.active ?? true;
     this.formPassword = '';
     this.toast.dismiss();
   }
@@ -233,6 +235,7 @@ export class SettingsDashboardComponent implements OnInit {
       username,
       email,
       role: this.formRole,
+      active: this.formActive,
     };
 
     if (password) {
@@ -254,5 +257,6 @@ export class SettingsDashboardComponent implements OnInit {
     this.formPassword = '';
     this.formEmail = '';
     this.formRole = 'USER';
+    this.formActive = true;
   }
 }

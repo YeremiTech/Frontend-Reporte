@@ -72,6 +72,21 @@
             <option value="ADMIN">ADMINISTRADOR</option>
           </select>
         </label>
+        <label class="settings-field settings-field--inline">
+          <span>Estado</span>
+          <div class="state-toggle">
+            <input
+              id="user-active"
+              type="checkbox"
+              class="form-check-input"
+              [(ngModel)]="formActive"
+              name="active"
+            />
+            <label for="user-active" class="state-toggle__label">
+              {{ formActive ? 'Activo' : 'Inactivo' }}
+            </label>
+          </div>
+        </label>
         <div class="settings-form__actions">
           <button type="submit" class="btn btn-rgfm-primary btn-sm" [disabled]="submitting()">
             <i [ngClass]="['bi', isEditing() ? 'bi-check-lg' : 'bi-person-plus-fill']" aria-hidden="true"></i>
@@ -96,6 +111,7 @@
               <tr>
                 <th scope="col">Usuario</th>
                 <th scope="col" class="col-email">Correo</th>
+                <th scope="col" class="col-status">Estado</th>
                 <th scope="col" class="col-role">Rol</th>
                 <th scope="col" class="col-date">Creado</th>
                 <th scope="col" class="col-actions">Acciones</th>
@@ -106,6 +122,15 @@
                 <tr [class.row-editing]="editingUserId() === user.id">
                   <td>{{ user.username }}</td>
                   <td class="col-email">{{ user.email }}</td>
+                  <td class="col-status">
+                    <span
+                      class="status-dot"
+                      [class.status-dot--inactive]="!user.active"
+                      [title]="user.active ? 'Activo' : 'Inactivo'"
+                      aria-hidden="true"
+                    ></span>
+                    <span class="status-text">{{ user.active ? 'Activo' : 'Inactivo' }}</span>
+                  </td>
                   <td class="col-role">
                     <span class="role-badge" [class.role-badge--admin]="user.role === 'ADMIN'">
                       {{ user.role === 'ADMIN' ? 'ADMINISTRADOR' : 'CLIENTE' }}

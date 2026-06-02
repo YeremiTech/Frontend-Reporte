@@ -5,6 +5,7 @@ export interface UsuarioSummary {
   username: string;
   email: string;
   role: AppRole;
+  active: boolean;
   createdAt: string;
 }
 
@@ -19,5 +20,6 @@ export interface UpdateUsuarioRequest {
   username: string;
   email: string;
   role: AppRole;
+  active?: boolean;
   password?: string;
 }
