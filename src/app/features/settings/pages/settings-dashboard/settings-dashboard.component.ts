@@ -3,7 +3,6 @@ import {
   Component,
   computed,
   inject,
-  OnDestroy,
   OnInit,
   signal,
 } from '@angular/core';
@@ -35,7 +34,7 @@ type FormMode = 'create' | 'edit';
   styleUrl: './settings-dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SettingsDashboardComponent implements OnInit, OnDestroy {
+export class SettingsDashboardComponent implements OnInit {
   private readonly userApi = inject(UserAdminApiService);
   private readonly auth = inject(AuthService);
   protected readonly toast = inject(ToastService);
@@ -67,17 +66,8 @@ export class SettingsDashboardComponent implements OnInit, OnDestroy {
   formRole: AppRole = 'USER';
   formActive = true;
 
-  private refreshIntervalId?: ReturnType<typeof setInterval>;
-
   ngOnInit(): void {
     this.loadUsers();
-    this.startAutoRefresh();
-  }
-
-  ngOnDestroy(): void {
-    if (this.refreshIntervalId != null && typeof globalThis.window !== 'undefined') {
-      globalThis.window.clearInterval(this.refreshIntervalId);
-    }
   }
 
   loadUsers(): void {
@@ -92,24 +82,6 @@ export class SettingsDashboardComponent implements OnInit, OnDestroy {
         this.loading.set(false);
       },
     });
-  }
-
-  private startAutoRefresh(): void {
-    if (typeof globalThis.window === 'undefined') {
-      return;
-    }
-    this.refreshIntervalId = globalThis.window.setInterval(() => {
-      if (this.loading() || this.submitting()) {
-        return;
-      }
-      if (typeof document !== 'undefined' && document.hidden) {
-        return;
-      }
-      this.userApi.listUsers().subscribe({
-        next: (list) => this.users.set(list),
-        error: () => undefined,
-      });
-    }, 5_000);
   }
 
   startCreate(): void {
